@@ -1,0 +1,31 @@
+### Organisational details
+- Writing language
+    - ?
+- Grading
+	- concept:  35%
+	- Implementation:   15%
+	- Thesis text:  30%
+	- Presentation (oral): 10%
+	- work ethics (self-organization): 10%
+- Supervisors
+	- Antrag
+		- Themenverantwortlicher: Prof. Dr. Birgitta König-Ries
+		- Betreuer: Leila Feddoul, Divyasha Sunil Naik
+		- Zweitgutachter
+	- Report
+		- Prof. Dr. Birgitta König-Ries
+		- Leila Feddoul
+		- Divyasha Sunil Naik
+- Meetings
+	- weekly meetings: ?
+	- Phd Scrum participation every monday at 10h.
+- Latex, Word, OpenOffice/LibreOffice? up to the student to decide which tool to use
+    - In case of latex usage here some templates provided from teh group: https://git.rz.uni-jena.de/fusion/template
+- form for registration and template for title page and "Selbständigkeitserklärung" available online:
+    - https://www.fmi.uni-jena.de/fmi_femedia/studium/studienorganisation/service-und-downloads/20222-antrag-bachelorarbeit.pdf
+	- https://www.fmi.uni-jena.de/fmi_femedia/studium/studienorganisation/service-und-downloads/20222-antrag-bachelorarbeit-anlagen.pdf
+- Gestaltungshinweise
+	- https://www.fmi.uni-jena.de/fmi_femedia/studium/studienorganisation/service-und-downloads/gestaltungshinweise-masterarbeit.pdf
+- if you need urgent feedback, do not wait for the next meeting, you can contact via slack or email
+- literature management tool: e.g., Jabref ..
+- concrete time schedule and milestones within the first month
