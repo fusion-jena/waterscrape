@@ -1,5 +1,5 @@
-- Meeting Room: https://bbb.mirz.uni-jena.de/b/lei-hzd-hjv-zcc
-- Meeting time: Tuesdays at 15h30
+- Meeting Room: https://bbb.mirz.uni-jena.de/b/div-pr2-ydt-1k7
+- Meeting time: TBD
 
 <!-- template
 # 2023/xx/xx
@@ -8,6 +8,15 @@
 ## Feedback
 ## Next steps
 -->
+
+# 19.12.2024
+
+- [] Create University of Jena login (itservice@uni-jena.de)
+  * [] Setup VPN and Element
+- [] Get permissions for MySQL database
+
+- Skim thesis, focus on 6.4 DB overview + future work
+
 # 2.07.2024 
 
 ## Orga
