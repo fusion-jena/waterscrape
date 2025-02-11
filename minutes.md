@@ -11,9 +11,9 @@
 
 # 19.12.2024
 
-- [] Create University of Jena login (itservice@uni-jena.de)
-  * [] Setup VPN and Element
-- [] Get permissions for MySQL database
+- [x] Create University of Jena login (itservice@uni-jena.de)
+  * [x] Setup VPN and Element
+- [x] Get permissions for MySQL database
 
 - Skim thesis, focus on 6.4 DB overview + future work
 
