@@ -9,6 +9,21 @@
 ## Next steps
 -->
 
+# 11.02.2025
+
+- [ ] Get MySQL Workbench running (fix dependency error)
+- [ ] Find out how size of tables 
+  - [ ] Make copies of tables (+ Python scripts)
+
+- [ ] start with point 2 in https://pad.uni-jena.de/nE-N5lt9T3GgjEgZ23rNKw# 
+
+Optional/add-ons:
+
+- [ ] Make db connection use environment variables
+- [ ] Change main script to use command line arguments (?)
+
+Next meeting scheduled for 07.03., 13:00.
+
 # 19.12.2024
 
 - [x] Create University of Jena login (itservice@uni-jena.de)
