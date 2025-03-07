@@ -9,18 +9,32 @@
 ## Next steps
 -->
 
+# 07.03.2025
+
+- either copy database locally and then modify contents
+- or get access to CREATE/ask Julia how she did it -> create copies 
+
+- update keywords (possible choices)
+- get accounts information bluesky
+
+Optional:
+
+- [ ] cleanup code/breakup big function
+
+Next meeting scheduled 21.03. 13:00.
+
 # 11.02.2025
 
-- [ ] Get MySQL Workbench running (fix dependency error)
-- [ ] Find out how size of tables 
+- [x] Get MySQL Workbench running (fix dependency error)
+- [x] Find out how size of tables 
   - [ ] Make copies of tables (+ Python scripts)
 
 - [ ] start with point 2 in https://pad.uni-jena.de/nE-N5lt9T3GgjEgZ23rNKw# 
 
 Optional/add-ons:
 
-- [ ] Make db connection use environment variables
-- [ ] Change main script to use command line arguments (?)
+- [x] Make db connection use environment variables
+- [x] Change main script to use command line arguments (?)
 
 Next meeting scheduled for 07.03., 13:00.
 
