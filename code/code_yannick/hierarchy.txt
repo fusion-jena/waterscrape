@@ -1,0 +1,277 @@
+Topics in ThWIC
+├── science and technology
+│   ├── natural sciences
+│   │   ├── _water data
+│   │   │   └── water data
+│   │   ├── _water flow
+│   │   │   └── water flow
+│   │   ├── _water quantification
+│   │   │   └── water quantification
+│   │   ├── water pollution/contamination
+│   │   │   ├── PFAS
+│   │   │   ├── forever chemicals
+│   │   │   ├── micro pollutant
+│   │   │   ├── nitrate pollution
+│   │   │   ├── nitrite pollution
+│   │   │   └── phosphate pollution
+│   │   └── water treatment/purification
+│   │       ├── demineralisation
+│   │       ├── desalination
+│   │       ├── water reuse
+│   │       └── zero liquid discharge
+│   └── water and technology
+│       ├── _water automation
+│       │   └── water automation
+│       ├── _water innovation
+│       │   └── water innovation
+│       ├── _water supply/distribution/network
+│       │   └── water supply/distribution/network
+│       ├── _water technology
+│       │   └── water technology
+│       ├── water energy
+│       │   ├── hydraulic energy
+│       │   ├── hydropower
+│       │   └── water energy
+│       └── water quality monitoring
+│           ├── COD measurement/monitoring
+│           ├── water quality analysis
+│           ├── water quality assessment
+│           └── water quality sensor
+└── social sciences
+    ├── cultural/symbolic
+    │   ├── _river culture
+    │   │   └── river culture
+    │   ├── _water ethics
+    │   │   └── water ethics
+    │   ├── recreation
+    │   │   ├── boating
+    │   │   ├── fishing
+    │   │   ├── houseboating
+    │   │   ├── kayaking
+    │   │   ├── rafting
+    │   │   ├── swimming
+    │   │   └── water-skiing
+    │   ├── water language
+    │   │   ├── circulation
+    │   │   ├── depth
+    │   │   ├── flow
+    │   │   ├── fluid metaphors
+    │   │   ├── living metaphors
+    │   │   ├── metaphors
+    │   │   └── relationality
+    │   ├── water narratives
+    │   │   ├── boating narratives
+    │   │   ├── climate fiction
+    │   │   ├── drought narratives
+    │   │   ├── flood narratives
+    │   │   ├── hydro-narratives
+    │   │   ├── hydromythologies
+    │   │   ├── nature writing
+    │   │   ├── river writing
+    │   │   ├── speculative fiction
+    │   │   └── watershed aesthetics
+    │   ├── water poetry
+    │   │   ├── fluid poetics
+    │   │   ├── rivering
+    │   │   └── watershed aesthetics
+    │   └── water religion
+    │       ├── ablution
+    │       ├── baptism 
+    │       ├── creation stories
+    │       └── great flood stories
+    ├── planetary water
+    │   ├── fresh water
+    │   │   ├── aquifers  
+    │   │   ├── clouds
+    │   │   ├── distressed freshwaters
+    │   │   ├── fog
+    │   │   ├── glaciers
+    │   │   ├── lakes
+    │   │   ├── marshlands
+    │   │   ├── rain
+    │   │   ├── rivers
+    │   │   ├── streams
+    │   │   ├── watersheds
+    │   │   └── wetlands
+    │   └── saltwater
+    │       ├── marine anthropology
+    │       ├── seascape epistemology
+    │       └── troubled saltwaters
+    ├── social theory 
+    │   ├── _actor-network theory
+    │   │   └── actor-network theory
+    │   ├── _human-nature-relationship
+    │   │   └── human-nature-relationship
+    │   ├── _modern water
+    │   │   └── modern water
+    │   ├── _ontologies
+    │   │   └── ontologies
+    │   ├── _political ecology of water
+    │   │   └── political ecology of water
+    │   └── _socio-hydrology
+    │       └── socio-hydrology
+    ├── water activism
+    │   ├── _anti-dam movement
+    │   │   └── anti-dam movement
+    │   ├── _anti-dam resistance
+    │   │   └── anti-dam resistance
+    │   ├── _bioregionalism
+    │   │   └── bioregionalism
+    │   ├── _conservation
+    │   │   └── conservation
+    │   ├── _decolonization efforts
+    │   │   └── decolonization efforts
+    │   ├── _legal status of rivers
+    │   │   └── legal status of rivers
+    │   ├── _protection
+    │   │   └── protection
+    │   ├── _renaturation of rivers
+    │   │   └── renaturation of rivers
+    │   ├── _restoration
+    │   │   └── restoration
+    │   ├── _rights of nature
+    │   │   └── rights of nature
+    │   ├── _rights of rivers
+    │   │   └── rights of rivers
+    │   ├── _sustainable water futures
+    │   │   └── sustainable water futures
+    │   ├── _water is life
+    │   │   └── water is life
+    │   └── _water stewardship
+    │       └── water stewardship
+    ├── water and social justice
+    │   ├── _climate migration
+    │   │   └── climate migration
+    │   ├── _environmental justice
+    │   │   └── environmental justice
+    │   ├── _environmental racism
+    │   │   └── environmental racism
+    │   ├── _human rights
+    │   │   └── human rights
+    │   ├── _participatory governance
+    │   │   └── participatory governance
+    │   ├── _public participation
+    │   │   └── public participation
+    │   ├── _settler-colonialist vs. indigenous interests
+    │   │   └── settler-colonialist vs. indigenous interests
+    │   ├── _water claims/rights
+    │   │   └── water claims/rights
+    │   ├── _water governance
+    │   │   └── water governance
+    │   └── _water is life
+    │       └── water is life
+    ├── water and sustainability
+    │   ├── _alternative solutions greywater treatment
+    │   │   └── alternative solutions greywater treatment
+    │   ├── _circular economy
+    │   │   └── circular economy
+    │   ├── _climate change
+    │   │   └── climate change
+    │   ├── _conservation
+    │   │   └── conservation
+    │   ├── _decentralization
+    │   │   └── decentralization
+    │   ├── _environmental impact
+    │   │   └── environmental impact
+    │   └── _life cycle assessment
+    │       └── life cycle assessment
+    ├── water conflict
+    │   ├── _transboundary conflict 
+    │   │   └── transboundary conflict 
+    │   ├── _water crisis
+    │   │   └── water crisis
+    │   ├── _water pollution
+    │   │   └── water pollution
+    │   ├── _water rights
+    │   │   └── water rights
+    │   ├── _water scarcity
+    │   │   └── water scarcity
+    │   └── _water security
+    │       └── water security
+    ├── water humanities
+    │   ├── _blue cultural studies
+    │   │   └── blue cultural studies
+    │   ├── _blue ecocriticism 
+    │   │   └── blue ecocriticism 
+    │   ├── _elemental ecocriticism
+    │   │   └── elemental ecocriticism
+    │   ├── _hydro-criticism
+    │   │   └── hydro-criticism
+    │   ├── _hydrohumanities
+    │   │   └── hydrohumanities
+    │   ├── _hydrological turn
+    │   │   └── hydrological turn
+    │   ├── _material ecocriticism
+    │   │   └── material ecocriticism
+    │   ├── _thinking with water
+    │   │   └── thinking with water
+    │   └── blue humanities
+    │       ├── hydrocolonialism
+    │       ├── hydrofeminism
+    │       ├── marine poetry
+    │       └── tidalectics
+    ├── water infrastructure
+    │   ├── _dams
+    │   │   └── dams
+    │   ├── _history of infrastructure
+    │   │   └── history of infrastructure
+    │   ├── _river basin
+    │   │   └── river basin
+    │   └── _river restoration
+    │       └── river restoration
+    ├── water knowledge
+    │   ├── _water poetry
+    │   │   └── water poetry
+    │   ├── indigenous knowledge
+    │   │   ├── grammar of animacy
+    │   │   ├── indigenous epistemologies
+    │   │   ├── indigenous ontoepistemologies
+    │   │   ├── indigenous ontologies
+    │   │   ├── reciprocity
+    │   │   ├── respect
+    │   │   ├── rivers as ancestors
+    │   │   └── rivers as relatives
+    │   ├── water education
+    │   │   ├── water as theory machine
+    │   │   └── water-centered perspectives on history
+    │   ├── water literacy
+    │   │   ├── lake literacy
+    │   │   ├── ocean literacy
+    │   │   └── river literacy
+    │   └── water literature
+    │       ├── water consciousness
+    │       └── water knowledge
+    └── water management
+        ├── accounting
+        │   ├── clean water
+        │   ├── ecosystem services
+        │   ├── fresh water resources
+        │   ├── water benchmark
+        │   ├── water footprint
+        │   └── water quality
+        ├── economics
+        │   ├── virtual water
+        │   ├── water as organic-mechanic entity
+        │   ├── water market
+        │   ├── water pricing
+        │   ├── water privatization
+        │   └── water trade
+        └── management
+            ├── clean water
+            ├── drought risk
+            ├── river channeling
+            ├── river restoration
+            ├── water balance
+            ├── water consumption
+            ├── water damming
+            ├── water demand
+            ├── water footprint
+            ├── water irrigation
+            ├── water productivity
+            ├── water security
+            ├── water shortage
+            ├── water supply
+            ├── water transfer
+            ├── water use
+            ├── water-energy-food-nexus
+            └── water-energy-nexus
