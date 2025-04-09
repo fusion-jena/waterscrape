@@ -64,6 +64,7 @@ def extract_bsky_db(keywords, keyword_category):
 
     # Start Search-Request for the keywords given as function parameters:
     base_url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
+    profile_url = "https://bsky.social/xrpc/app.bsky.actor.getProfile"
 
     # Parameters for pagination:
     cursor = 0  # number of entries to skip in the BlueSky DB, increases with every search request
@@ -74,7 +75,8 @@ def extract_bsky_db(keywords, keyword_category):
         params = {
             "q": keywords,
             "limit": limit,
-            "cursor": cursor
+            "cursor": cursor,
+            # "tag": tag,
         }
         headers = {"Authorization": "Bearer " + session["accessJwt"]}
 
@@ -92,11 +94,12 @@ def extract_bsky_db(keywords, keyword_category):
 
         # information of an API-Request will be pushed into the ThWIC-DB:
         for post in posts:
-            print(post)
-            assert 0
             account = post.get('author')
+
             account_id = account.get('did')
-            assert 0
+            profile = requests.get(
+                profile_url, params={"actor": account_id}, headers=headers
+            ).json()
             record = post.get('record')
             embed = record.get('embed')
             post_id = post.get('cid')
@@ -114,10 +117,10 @@ def extract_bsky_db(keywords, keyword_category):
                             account_id,
                             None,
                             iso_to_mysql_datetime(account.get('createdAt')),
-                            None,
-                            None,
-                            None,
-                            None,
+                            profile.get("description"),
+                            profile.get("followersCount"),
+                            profile.get("followsCount"),
+                            profile.get("postsCount"),
                             None
                         )
                     )
