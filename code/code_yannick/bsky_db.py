@@ -1,33 +1,192 @@
+import os
 import requests
 import mysql.connector
-from datetime import datetime
 from dotenv import load_dotenv
-import os
+from datetime import datetime
+
+from utils import iso_to_mysql_datetime
 
 
-# Function to convert BlueSky datetime format (ISO) to MySQL datetime:
-def iso_to_mysql_datetime(iso_string):
-    try:
-        # check if time zone ('Z') is included:
-        if iso_string.endswith('Z'):
-            # remove 'Z' und format the date, '00:00' is also UTC-time:
-            dt = datetime.fromisoformat(iso_string[:-1] + '+00:00')
+base_url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
+profile_url = "https://bsky.social/xrpc/app.bsky.actor.getProfile"
+
+# TODO: Make these environment variables
+BLUESKY_HANDLE = "jubo.bsky.social"
+BLUESKY_APP_PASSWORD = "xc7o-c6sn-akwd-fnpx"
+
+
+def insert_account(cursorDB, post, headers):
+    account = post.get("author")
+    account_id = account.get("did")
+
+    profile = requests.get(
+        profile_url, params={"actor": account_id}, headers=headers
+    ).json()
+
+    # Check if account_id already exists in ThWIC-DB:
+    cursorDB.execute("SELECT * FROM accounts WHERE account_id=%s", (account_id,))
+    account_exists = cursorDB.fetchone()
+
+    # INSERT into accounts table if account doesn't already exist:
+    if not account_exists:
+        cursorDB.execute(
+            "INSERT INTO accounts "
+
+            "(account_id, is_bot, created_at, description, followers_count, "
+            "following_count, statuses_count, last_status_at) "
+
+            "VALUES "
+            "(%s, %s, %s, %s, %s, %s, %s, %s)",
+
+            (
+                account_id,
+                None,
+                iso_to_mysql_datetime(account.get('createdAt')),
+                profile.get("description"),
+                profile.get("followersCount"),
+                profile.get("followsCount"),
+                profile.get("postsCount"),
+                None
+            )
+        )
+        print(f"Account inserted: {account_id}")
+
+
+def insert_post(cursorDB, post, keywords, keyword_category):
+    record = post["record"]
+    account = post.get("author")
+    post_id = post.get("cid")
+    account_id = account.get("did")
+
+    # INSERT into posts table:
+    # Check if post already exists in ThWIC-DB:
+    cursorDB.execute("SELECT * FROM posts WHERE post_id=%s", (post_id,))
+    post_exists = cursorDB.fetchone()
+
+    # Post will only be inserted if it doesn't already exist in ThWIC-DB
+    if not post_exists:
+        # Extract further information for ThWIC-DB
+        domain = account.get("handle")
+        reply = record.get("reply")
+        labels = bool(post.get("labels"))
+
+        if reply:
+            parent_reply = reply.get("parent")
+            parent_reply_uri = parent_reply.get("uri")
         else:
-            # parsing in case of no information about time zone:
-            dt = datetime.fromisoformat(iso_string)
+            parent_reply_uri = None
 
-        # format to MySQL DATETIME:
-        mysql_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
+        cursorDB.execute(
+            (
+                "INSERT INTO posts "
 
-        return mysql_datetime
+                "(post_id, created_at, in_reply_to_id, is_sensitive, "
+                "visibility, replies_count, reblogs_count, likes_count, "
+                "content, from_platform, instance_name, keyword_category, "
+                "keywords, date_first_request, account_id) "
 
-    # catch error if sth with datetime formatting went wrong:
-    except ValueError as e:
-        print(f"Error converting iso to MySQL datetime: {e}")
-        return None
+                "VALUES "
+                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            ),
+            (
+                post_id,
+                iso_to_mysql_datetime(record.get('createdAt')),
+                parent_reply_uri,  # URI includes the ID (as DID)
+                labels,
+                None,
+                post.get("replyCount"),
+                post.get("repostCount"),
+                post.get("likeCount"),
+                record.get('text'),
+                "BlueSky",
+                domain,
+                keyword_category,
+                keywords,
+                datetime.now(),
+                account_id
+            )
+        )
+        print(f"Post inserted: {post_id}")
 
 
-# TODO: Cyclical complexity too high, move to other funcs (?)
+def insert_media(cursorDB, post):
+    post_id = post.get("cid")
+    record = post.get("record")
+    embed = record.get("embed")
+
+    # INSERT into media_attachments table:
+    if embed is not None:  # media attachments are saved as embeds in BlueSky
+        for attachment in embed:
+            # For every attachment, the ID and the type is extracted,
+            # the JSON structure of the attachment types differ,
+            # so they have to be handled separately
+
+            attachment_type = embed.get("$type")
+
+            if attachment_type == "app.bsky.embed.images":
+                type_ = "image"
+                image_info = embed.get("images")
+
+                for image_item in image_info:
+                    image = image_item.get("image", {})
+                    ref = image.get("ref", {})
+                    link = ref.get("$link")
+                    attachment_id = link
+
+            elif attachment_type == "app.bsky.embed.external":
+                type_ = "external"
+                external_info = embed.get("external")
+                external_ref_info = external_info.get("thumb")
+
+                if external_ref_info is not None:
+                    ref_external = external_ref_info.get("ref")
+                    if ref_external is not None:
+                        link_external = ref_external.get("$link")
+                        attachment_id = link_external
+                    else:
+                        print(
+                            "No reference found in external embed, "
+                            "skipping this attachment."
+                        )
+                else:
+                    # If the external attachment is no link,
+                    # the json structure is unknown so it won't
+                    # be inserted into ThWIC-DB
+                    print(
+                        "No thumb found in external embed, "
+                        "skipping this attachment."
+                    )
+
+            elif attachment_type == "app.bsky.embed.record":
+                type_ = "post"
+                record_info = embed.get("record")
+                attachment_id = record_info.get("cid")
+            else:
+                attachment_type = None
+
+            if attachment_type is not None:
+                cursorDB.execute(
+                    "SELECT * FROM media_attachments "
+                    "WHERE id_attachment=%s", (attachment_id,)
+                )
+                attachment_exists = cursorDB.fetchone()
+
+                if not attachment_exists:
+                    cursorDB.execute(
+                        "INSERT INTO media_attachments "
+                        "(id_attachment, attachment_type, post_id) "
+                        "VALUES (%s, %s, %s)",
+                        (
+                            attachment_id,
+                            type_,
+                            post_id
+                        )
+                    )
+                    print(
+                        f"Attachment inserted: {attachment_id} type: {type_}"
+                    )
+
+
 def extract_bsky_db(keywords, keyword_category):
     load_dotenv()
 
@@ -40,11 +199,6 @@ def extract_bsky_db(keywords, keyword_category):
         database=os.getenv("DB_NAME")
     )
     cursorDB = db_connection.cursor()
-
-    # BlueSky Authorization: the app password is copied from my bsky account
-
-    BLUESKY_HANDLE = "jubo.bsky.social"
-    BLUESKY_APP_PASSWORD = "xc7o-c6sn-akwd-fnpx"
 
     resp = requests.post(
         "https://bsky.social/xrpc/com.atproto.server.createSession",
@@ -59,16 +213,14 @@ def extract_bsky_db(keywords, keyword_category):
         print("Authorization-Error:", resp.status_code)
         return
 
-    # save Authorization data in session variable:
+    # Save Authorization data in session variable:
     session = resp.json()
 
     # Start Search-Request for the keywords given as function parameters:
-    base_url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
-    profile_url = "https://bsky.social/xrpc/app.bsky.actor.getProfile"
 
-    # Parameters for pagination:
-    cursor = 0  # number of entries to skip in the BlueSky DB, increases with every search request
-    limit = 100  # max number of posts retrieved from one single API-Request
+    # No. of entries to skip in the BlueSky DB
+    cursor = 0  # Increases with every search request
+    limit = 100  # Max no. of posts retrieved from one single API-Request
 
     # "until no further search results are found":
     while True:
@@ -78,161 +230,44 @@ def extract_bsky_db(keywords, keyword_category):
             "cursor": cursor,
             # "tag": tag,
         }
+        # TODO: Do we really need to reassign on every iteration ?
         headers = {"Authorization": "Bearer " + session["accessJwt"]}
 
         resp = requests.get(base_url, params=params, headers=headers)
 
-        print(f"Anfrage erfolgreich mit Cursor {cursor}:")
+        print(f"Request successful with {cursor}:")
 
-        # get alle posts from one API-Request:
+        # Get all posts from one API-Request:
         json_data = resp.json()
-        posts = json_data.get('posts', [])
+        posts = json_data.get("posts", [])
 
         if not posts:
-            print(f"No further search-results with offset {cursor}.")
+            print(f"No further search results with offset {cursor}.")
             break
 
-        # information of an API-Request will be pushed into the ThWIC-DB:
+        # Information of an API-Request will be pushed into the ThWIC-DB:
         for post in posts:
-            account = post.get('author')
 
-            account_id = account.get('did')
-            profile = requests.get(
-                profile_url, params={"actor": account_id}, headers=headers
-            ).json()
-            record = post.get('record')
-            embed = record.get('embed')
-            post_id = post.get('cid')
+            # TODO: Handle and save hashtags
+            # feats = [facet.get("features") for facet in record.get("facets")]
+            #
+            # # Only take the first list element, as it shouldn't be possible
+            # # to have multiple hashtags within the same position range (?)
+            # tags = [feat[0]["tag"] for feat in feats if "tag" in feat[0]]
+
+            assert 0
 
             try:
-                # check if account_id already exists in ThWIC-DB:
-                cursorDB.execute("SELECT * FROM accounts WHERE account_id=%s", (account_id,))
-                account_exists = cursorDB.fetchone()
+                insert_account(cursorDB, headers)
+                insert_post(cursorDB, keywords, keyword_category)
+                insert_media(cursorDB)
 
-                # INSERT into accounts table if account doesn't already exist:
-                if not account_exists:
-                    cursorDB.execute(
-                        "INSERT INTO accounts (account_id, is_bot, created_at, description, followers_count, following_count, statuses_count, last_status_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                        (
-                            account_id,
-                            None,
-                            iso_to_mysql_datetime(account.get('createdAt')),
-                            profile.get("description"),
-                            profile.get("followersCount"),
-                            profile.get("followsCount"),
-                            profile.get("postsCount"),
-                            None
-                        )
-                    )
-                    print(f"Account inserted: {account_id}")
-
-                # INSERT into posts table:
-                # check if post already exists in ThWIC-DB:
-                cursorDB.execute("SELECT * FROM posts WHERE post_id=%s", (post_id,))
-                post_exists = cursorDB.fetchone()
-
-                # post will only be inserted if it doesn't already exist in ThWIC-DB:
-                if not post_exists:
-                    # extract further information for ThWIC-DB:
-                    domain = account.get('handle')
-                    reply = record.get('reply')
-                    labels = bool(post.get('labels'))
-
-                    if reply:
-                        parent_reply = reply.get('parent')
-                        parent_reply_uri = parent_reply.get('uri')
-                    else:
-                        parent_reply_uri = None
-
-                    # insert in ThWIC-DB:
-                    cursorDB.execute(
-                        "INSERT INTO posts (post_id, created_at, in_reply_to_id, is_sensitive, visibility, replies_count, reblogs_count, likes_count, content, from_platform, instance_name, keyword_category, keywords, date_first_request, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                        (
-                            post_id,
-                            iso_to_mysql_datetime(record.get('createdAt')),
-                            parent_reply_uri,  # URI includes the ID (as DID)
-                            labels,
-                            None,
-                            post.get('replyCount'),
-                            post.get('repostCount'),
-                            post.get('likeCount'),
-                            record.get('text'),
-                            'BlueSky',
-                            domain,
-                            keyword_category,
-                            keywords,
-                            datetime.now(),
-                            account_id
-                        )
-                    )
-                    print(f"Post inserted: {post_id}")
-
-                # INSERT into media_attachments table:
-                if embed is not None:  # media attachments are saved as embeds in BlueSky
-                    for attachment in embed:
-                        # for every attachment, the ID and the type of the attachment is extracted,
-                        # the JSON structure of the attachment types differ, so they have to be handled separately:
-                        attachment_type = embed.get('$type')
-
-                        if attachment_type == 'app.bsky.embed.images':
-                            type_ = 'image'
-                            image_info = embed.get('images')
-
-                            for image_item in image_info:
-                                image = image_item.get('image', {})
-                                ref = image.get('ref', {})
-                                link = ref.get('$link')
-                                attachment_id = link
-
-                        elif attachment_type == 'app.bsky.embed.external':
-                            type_ = 'external'
-                            external_info = embed.get('external')
-                            external_ref_info = external_info.get('thumb')
-
-                            if external_ref_info is not None:
-                                ref_external = external_ref_info.get('ref')
-                                if ref_external is not None:
-                                    link_external = ref_external.get('$link')
-                                    attachment_id = link_external
-                                else:
-                                    print("No reference found in external embed, skipping this attachment.")
-                            else:
-                                # if the external attachment is no link, the json structure is unknown so it
-                                # won't be inserted into ThWIC-DB:
-                                print("No thumb found in external embed, skipping this attachment.")
-
-                        elif attachment_type == 'app.bsky.embed.record':
-                            type_ = 'post'
-                            record_info = embed.get('record')
-                            attachment_id = record_info.get('cid')
-                        else:
-                            attachment_type = None
-
-                        if attachment_type is not None:  # ("if the post has an attachment":)
-                            cursorDB.execute("SELECT * FROM media_attachments WHERE id_attachment=%s", (attachment_id,))
-                            attachment_exists = cursorDB.fetchone()
-                            # if the attachment doesn't already exist in ThWIC-DB, insert into DB:
-                            if not attachment_exists:
-                                cursorDB.execute(
-                                    "INSERT INTO media_attachments (id_attachment, attachment_type, post_id) VALUES (%s, %s, %s)",
-                                    (
-                                        attachment_id,
-                                        type_,
-                                        post_id
-                                    )
-                                )
-                                print(f"Attachment inserted: {attachment_id} type: {type_}")
-
-                # save the Accounts/Posts/Attachments in ThWIC-DB:
+                # Save the Accounts/Posts/Attachments in ThWIC-DB:
                 db_connection.commit()
 
-            # handle Errors that occur when inserting into ThWIC-DB:
             except mysql.connector.Error as err:
                 print(f"Error inserting in DB: {err}")
                 db_connection.rollback()
 
-        # increase cursor for pagination, to get the next posts:
+        # Increase cursor for pagination, to get the next posts:
         cursor += len(posts)
-
-
-
