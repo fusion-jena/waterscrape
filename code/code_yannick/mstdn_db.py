@@ -6,29 +6,148 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
+from utils import iso_to_mysql_datetime
 
-def iso_to_mysql_datetime(iso_string):
-    try:
-        # check if time zone ('Z') is included:
-        if iso_string.endswith('Z'):
-            # remove 'Z' und format the date, '00:00' is also UTC-time:
-            dt = datetime.fromisoformat(iso_string[:-1] + '+00:00')
+
+search_url = "https://mastodon.social/api/v2/search"
+auth_url = "https://mastodon.social/api/v1/apps/verify_credentials"
+
+# Mastodon Authorization: the access_token can be copied from the Mastodon GUI
+ACCESS_TOKEN = "tTshb14OUIX5LjLo4ANbmPE2ZfUS_iOYAy0uWjruIfQ"
+
+
+def insert_account(cursor, status):
+    account = status.get('account')
+    account_id = account.get('id')
+
+    # check if account_id already exists in ThWIC-DB:
+    cursor.execute("SELECT * FROM accounts WHERE account_id=%s", (account_id,))
+    account_exists = cursor.fetchone()
+
+    # INSERT into accounts table if account doesn't already exist:
+    if not account_exists:
+        cursor.execute(
+            "INSERT INTO accounts (account_id, is_bot, created_at, description, followers_count, following_count, statuses_count, last_status_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (
+                account_id,
+                account.get('bot'),
+                iso_to_mysql_datetime(account.get('created_at')),
+                account.get('note'),
+                account.get('followers_count'),
+                account.get('following_count'),
+                account.get('statuses_count'),
+                iso_to_mysql_datetime(account.get('last_status_at'))
+            )
+        )
+        print(f"Account inserted: {account_id}")
+
+
+def insert_post(cursor, status, keywords, keyword_category):
+    # INSERT into posts table:
+    # check if post already exists in ThWIC-DB:
+    post_id = status.get('id')
+    cursor.execute("SELECT * FROM posts WHERE post_id=%s", (post_id,))
+    post_exists = cursor.fetchone()
+
+    account = status.get('account')
+    account_id = account.get('id')
+
+    # post will only be inserted if it doesn't already exist in ThWIC-DB:
+    if not post_exists:
+        # extract domain from acct or set to mastodon.social
+        acct = account.get('acct')
+        if '@' in acct:
+            domain = acct.split('@')[1]
         else:
-            # parsing in case of no information about time zone:
-            dt = datetime.fromisoformat(iso_string)
+            domain = 'mastodon.social'
 
-        # format to MySQL DATETIME:
-        mysql_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
+        # insert in ThWIC-DB:
+        cursor.execute(
+            "INSERT INTO posts (post_id, created_at, in_reply_to_id, is_sensitive, visibility, replies_count, reblogs_count, likes_count, content, from_platform, instance_name, keyword_category, keywords, date_first_request, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (
+                post_id,
+                iso_to_mysql_datetime(status.get('created_at')),
+                status.get('in_reply_to_id'),
+                status.get('sensitive'),
+                status.get('visibility'),
+                status.get('replies_count'),
+                status.get('reblogs_count'),
+                status.get('favourites_count'),
+                status.get('content'),
+                'Mastodon',
+                domain,
+                keyword_category,
+                keywords,
+                datetime.now(),
+                account_id
+            )
+        )
+        print(f"Post inserted: {post_id}")
 
-        return mysql_datetime
 
-    # catch error if sth with datetime formatting went wrong:
-    except ValueError as e:
-        print(f"Error converting iso to MySQL datetime: {e}")
-        return None
+def insert_hashtag(cursor, status):
+    ...
 
 
-def extract_mastodon_db(keywords, keyword_category):
+def insert_poll(cursor, status):
+    post_id = status.get('id')
+
+    # INSERT into polls table:
+    if status.get('poll'):
+        poll = status.get('poll')
+        poll_id = poll.get('id')
+
+        # check if poll is already in ThWIC-DB:
+        cursor.execute("SELECT * FROM polls WHERE poll_id=%s", (poll_id,))
+        poll_exists = cursor.fetchone()
+
+        # insert poll in ThWIC-DB if it doesn't already exist there:
+        if not poll_exists:
+            cursor.execute(
+                "INSERT INTO polls (poll_id, poll_expires_at, multiple_choice, votes_count, voters_count, options, post_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (
+                    poll_id,
+                    iso_to_mysql_datetime(poll.get('expires_at')),
+                    poll.get('multiple'),
+                    poll.get('votes_count'),
+                    poll.get('voters_count'),
+                    json.dumps(poll.get('options')),
+                    post_id
+                )
+            )
+            print(f"Poll inserted: {poll_id}")
+
+
+def insert_media(cursor, status):
+    post_id = status.get('id')
+    # INSERT into attachments table:
+    # every attachment of the post should be considered:
+    for attachment in status.get('media_attachments', []):
+        attachment_id = attachment.get('id')
+
+        # check if attachment already exists in ThWIC-DB:
+        cursor.execute("SELECT * FROM media_attachments WHERE id_attachment=%s", (attachment_id,))
+        attachment_exists = cursor.fetchone()
+
+        # if the attachment doesn't already exist in ThWIC-DB, insert into DB:
+        if not attachment_exists:
+            cursor.execute(
+                "INSERT INTO media_attachments (id_attachment, attachment_type, post_id) VALUES (%s, %s, %s)",
+                (
+                    attachment_id,
+                    attachment.get('type'),
+                    post_id
+                )
+            )
+            print(f"Attachment inserted: {attachment_id}")
+
+
+def extract_mastodon_db(keywords, keyword_category=None):
+    if not keyword_category:
+        from hierarchy import get_keyword_dict
+        keyword_dict = get_keyword_dict()
+        keyword_category = keyword_dict[keywords]
+
     load_dotenv()
 
     # Connect to ThWIC-DB:
@@ -41,17 +160,12 @@ def extract_mastodon_db(keywords, keyword_category):
     )
     cursor = db_connection.cursor()
 
-    # Mastodon Authorization: the access_token can be copied from the Mastodon GUI
-    access_token = 'tTshb14OUIX5LjLo4ANbmPE2ZfUS_iOYAy0uWjruIfQ'
-
-    url = 'https://mastodon.social/api/v1/apps/verify_credentials'
-
     headers = {
-        'Authorization': f'Bearer {access_token}'
+        "Authorization": f"Bearer {ACCESS_TOKEN}"
     }
 
     # save Authorization data:
-    response = requests.get(url, headers=headers)
+    response = requests.get(auth_url, headers=headers)
 
     # Check if Authorization was successful:
     if response.status_code == 200:
@@ -61,14 +175,6 @@ def extract_mastodon_db(keywords, keyword_category):
         print("Authorization-Error:", response.status_code)
         return
 
-    # Start Search-Request for the keywords given as function parameters:
-    url = 'https://mastodon.social/api/v2/search'
-
-    headers = {
-        'Authorization': f'Bearer {access_token}'
-    }
-
-    assert 0
     # Parameters for pagination:
     offset = 0  # number of entries to skip in the Mastodon DB, increases with every search request
     limit = 40  # max number of posts from one API-Request
@@ -84,7 +190,7 @@ def extract_mastodon_db(keywords, keyword_category):
             # and accounts
         }
 
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(search_url, headers=headers, params=params)
 
         # check for errors, else extract and push in DB:
         if response.status_code == 429:
@@ -97,16 +203,16 @@ def extract_mastodon_db(keywords, keyword_category):
         elif response.status_code == 200:
             print(f"Request successful with Offset {offset}:")
 
-            # get alle the posts (= statuses) from one API-Request:
+            # Get all the posts (= statuses) from one API-Request:
             json_data = response.json()
-            statuses = json_data.get('statuses', [])
+            statuses = json_data.get("statuses", [])
 
-            # make sure that it is not a server-side error if no further statuses are returned for specific offset:
+            # Make sure that it is not a server-side error if no further statuses are returned for specific offset:
             retry_count = 0
             while not statuses and retry_count < retry_attempts:
                 print(f"no results returned, retrying... Attempt {retry_count + 1}/{retry_attempts}")
                 time.sleep(2)  # small delay before retry
-                response = requests.get(url, headers=headers, params=params)
+                response = requests.get(search_url, headers=headers, params=params)
                 json_data = response.json()
                 statuses = json_data.get('statuses', [])
                 retry_count += 1
@@ -118,114 +224,12 @@ def extract_mastodon_db(keywords, keyword_category):
             # posts of an API-Request will be pushed into the ThWIC-DB:
             for status in statuses:
                 # extract account information:
-                account = status.get('account')
-                account_id = account.get('id')
 
                 try:
-                    # check if account_id already exists in ThWIC-DB:
-                    cursor.execute("SELECT * FROM accounts WHERE account_id=%s", (account_id,))
-                    account_exists = cursor.fetchone()
-
-                    # INSERT into accounts table if account doesn't already exist:
-                    if not account_exists:
-                        cursor.execute(
-                            "INSERT INTO accounts (account_id, is_bot, created_at, description, followers_count, following_count, statuses_count, last_status_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                            (
-                                account_id,
-                                account.get('bot'),
-                                iso_to_mysql_datetime(account.get('created_at')),
-                                account.get('note'),
-                                account.get('followers_count'),
-                                account.get('following_count'),
-                                account.get('statuses_count'),
-                                iso_to_mysql_datetime(account.get('last_status_at'))
-                            )
-                        )
-                        print(f"Account inserted: {account_id}")
-
-                    # INSERT into posts table:
-                    # check if post already exists in ThWIC-DB:
-                    post_id = status.get('id')
-                    cursor.execute("SELECT * FROM posts WHERE post_id=%s", (post_id,))
-                    post_exists = cursor.fetchone()
-
-                    # post will only be inserted if it doesn't already exist in ThWIC-DB:
-                    if not post_exists:
-                        # extract domain from acct or set to mastodon.social
-                        acct = account.get('acct')
-                        if '@' in acct:
-                            domain = acct.split('@')[1]
-                        else:
-                            domain = 'mastodon.social'
-
-                        # insert in ThWIC-DB:
-                        cursor.execute(
-                            "INSERT INTO posts (post_id, created_at, in_reply_to_id, is_sensitive, visibility, replies_count, reblogs_count, likes_count, content, from_platform, instance_name, keyword_category, keywords, date_first_request, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                            (
-                                post_id,
-                                iso_to_mysql_datetime(status.get('created_at')),
-                                status.get('in_reply_to_id'),
-                                status.get('sensitive'),
-                                status.get('visibility'),
-                                status.get('replies_count'),
-                                status.get('reblogs_count'),
-                                status.get('favourites_count'),
-                                status.get('content'),
-                                'Mastodon',
-                                domain,
-                                keyword_category,
-                                keywords,
-                                datetime.now(),
-                                account_id
-                            )
-                        )
-                        print(f"Post inserted: {post_id}")
-
-                    # INSERT into polls table:
-                    if status.get('poll'):
-                        poll = status.get('poll')
-                        poll_id = poll.get('id')
-
-                        # check if poll is already in ThWIC-DB:
-                        cursor.execute("SELECT * FROM polls WHERE poll_id=%s", (poll_id,))
-                        poll_exists = cursor.fetchone()
-
-                        # insert poll in ThWIC-DB if it doesn't already exist there:
-                        if not poll_exists:
-                            cursor.execute(
-                                "INSERT INTO polls (poll_id, poll_expires_at, multiple_choice, votes_count, voters_count, options, post_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                (
-                                    poll_id,
-                                    iso_to_mysql_datetime(poll.get('expires_at')),
-                                    poll.get('multiple'),
-                                    poll.get('votes_count'),
-                                    poll.get('voters_count'),
-                                    json.dumps(poll.get('options')),
-                                    post_id
-                                )
-                            )
-                            print(f"Poll inserted: {poll_id}")
-
-                    # INSERT into attachments table:
-                    # every attachment of the post should be considered:
-                    for attachment in status.get('media_attachments', []):
-                        attachment_id = attachment.get('id')
-
-                        # check if attachment already exists in ThWIC-DB:
-                        cursor.execute("SELECT * FROM media_attachments WHERE id_attachment=%s", (attachment_id,))
-                        attachment_exists = cursor.fetchone()
-
-                        # if the attachment doesn't already exist in ThWIC-DB, insert into DB:
-                        if not attachment_exists:
-                            cursor.execute(
-                                "INSERT INTO media_attachments (id_attachment, attachment_type, post_id) VALUES (%s, %s, %s)",
-                                (
-                                    attachment_id,
-                                    attachment.get('type'),
-                                    post_id
-                                )
-                            )
-                            print(f"Attachment inserted: {attachment_id}")
+                    insert_account(cursor, status)
+                    insert_post(cursor, status, keywords, keyword_category)
+                    insert_poll(cursor, status)
+                    insert_media(cursor, status)
 
                     # save the Accounts/Posts/Attachments/Polls in ThWIC-DB:
                     db_connection.commit()
@@ -253,4 +257,3 @@ def extract_mastodon_db(keywords, keyword_category):
     db_connection.close()
     print(f"final offset (= first offset with zero results): {offset}")
     print(f"status code: {response.status_code}")
-
