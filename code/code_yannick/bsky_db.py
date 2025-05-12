@@ -24,7 +24,9 @@ def insert_account(cursorDB, post, headers):
     ).json()
 
     # Check if account_id already exists in ThWIC-DB:
-    cursorDB.execute("SELECT * FROM accounts WHERE account_id=%s", (account_id,))
+    cursorDB.execute(
+        "SELECT * FROM accounts WHERE account_id=%s", (account_id,)
+    )
     account_exists = cursorDB.fetchone()
 
     # INSERT into accounts table if account doesn't already exist:
@@ -109,6 +111,49 @@ def insert_post(cursorDB, post, keywords, keyword_category):
         print(f"Post inserted: {post_id}")
 
 
+def insert_hashtag(cursorDB, post, keywords, keyword_category):
+    record = post["record"]
+
+    post_id = post.get("cid")
+    # TODO: Handle and save hashtags
+    if record.get("facets"):
+        feats = [facet.get("features") for facet in record.get("facets")]
+        # # Only take the first list element, as it shouldn't be possible
+        # # to have multiple hashtags within the same position range (?)
+        tags = [feat[0]["tag"] for feat in feats if "tag" in feat[0]]
+    else:
+        tags = []
+
+    for tag in tags:
+        cursorDB.execute("SELECT * FROM hashtags WHERE hashtag=%s", (tag,))
+        tag_exists = cursorDB.fetchone()
+
+        if not tag_exists:
+
+            cursorDB.execute(
+                (
+                    "INSERT INTO hashtags "
+
+                    "(hashtag)"
+                    "VALUES (%s)"
+                ),
+                (
+                    tag,
+                )
+            )
+
+            hashtag_id = cursorDB.lastrowid
+            cursorDB.execute(
+                (
+                    "INSERT INTO post_hashtags (post_id, hashtag_id) "
+                    "VALUES (%s, %s)"
+                ),
+                (
+                    post_id, hashtag_id
+                )
+            )
+
+
 def insert_media(cursorDB, post):
     post_id = post.get("cid")
     record = post.get("record")
@@ -148,6 +193,7 @@ def insert_media(cursorDB, post):
                             "No reference found in external embed, "
                             "skipping this attachment."
                         )
+                        continue
                 else:
                     # If the external attachment is no link,
                     # the json structure is unknown so it won't
@@ -156,6 +202,7 @@ def insert_media(cursorDB, post):
                         "No thumb found in external embed, "
                         "skipping this attachment."
                     )
+                    continue
 
             elif attachment_type == "app.bsky.embed.record":
                 type_ = "post"
@@ -187,7 +234,12 @@ def insert_media(cursorDB, post):
                     )
 
 
-def extract_bsky_db(keywords, keyword_category):
+def extract_bsky_db(keywords, keyword_category=None):
+    if not keyword_category:
+        from hierarchy import get_keyword_dict
+        keyword_dict = get_keyword_dict()
+        keyword_category = keyword_dict[keywords]
+
     load_dotenv()
 
     # Connect to ThWIC-DB:
@@ -247,20 +299,12 @@ def extract_bsky_db(keywords, keyword_category):
 
         # Information of an API-Request will be pushed into the ThWIC-DB:
         for post in posts:
-
-            # TODO: Handle and save hashtags
-            # feats = [facet.get("features") for facet in record.get("facets")]
-            #
-            # # Only take the first list element, as it shouldn't be possible
-            # # to have multiple hashtags within the same position range (?)
-            # tags = [feat[0]["tag"] for feat in feats if "tag" in feat[0]]
-
-            assert 0
-
             try:
-                insert_account(cursorDB, headers)
-                insert_post(cursorDB, keywords, keyword_category)
-                insert_media(cursorDB)
+                insert_account(cursorDB, post, headers)
+                insert_post(cursorDB, post, keywords, keyword_category)
+                # keywords might not be necessary ?
+                insert_hashtag(cursorDB, post, keywords, keyword_category)
+                insert_media(cursorDB, post)
 
                 # Save the Accounts/Posts/Attachments in ThWIC-DB:
                 db_connection.commit()

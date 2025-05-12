@@ -37,9 +37,9 @@ def main():
 
     for platform in platforms:
         if platform == "mastodon":
-            extract_mastodon_db(keywords, keyword_category)
+            extract_mastodon_db(keywords[0], keyword_category)
         elif platform == "bluesky":
-            extract_bsky_db(keywords, keyword_category)
+            extract_bsky_db(keywords[0], keyword_category)
         else:
             raise ValueError("Invalid social media platform provided.")
 
