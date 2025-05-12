@@ -1,0 +1,64 @@
+Topics in ThWIC
+├── science and technology
+│   ├── natural sciences
+│   │   ├── ground*water quantification (* means:- groundwater/ ground-water/ ground water)
+│   │   ├── surface*water quantification
+│   │   ├── waste*water quantification
+│   │   ├── drinking*water quantification
+│   │   ├── fresh*water quantification
+│   │   ├── sewage quantification
+│   │   ├── water quantification
+│   │   ├── ground*water contamination
+│   │   ├── surface*water contamination
+│   │   ├── waste*water contamination
+│   │   ├── drinking*water contamination
+│   │   ├── fresh*water contamination
+│   │   ├── sewage contamination
+│   │   ├── water contamination
+│   │   ├── Lake*water contamination
+│   │   ├── river*water contamination
+│   │   ├── ground*water pollution
+│   │   ├── surface*water pollution
+│   │   ├── waste*water pollution
+│   │   ├── drinking*water pollution
+│   │   ├── fresh*water pollution
+│   │   ├── sewage pollution
+│   │   ├── water pollution
+│   │   ├── Lake*water pollution
+│   │   ├── river*water contamination
+│   │   ├── ground*water flow
+│   │   ├── surface*water flow
+│   │   ├── waste*water flow
+│   │   ├── drinking*water flow
+│   │   ├── fresh*water flow
+│   │   ├── sewage flow
+│   │   ├── water flow
+│   │   ├── water micropollutant*
+│   │   ├── water treatment
+│   │   ├── water purification
+│   │   ├── zero liquid discharge
+│   │   ├── nitrate pollution
+│   │   ├── nitrite pollution
+│   │   └── phosphate pollution
+│   └── water and technology
+│       ├── water supply
+│       ├── water distribution
+│       ├── water network
+│       ├── water technology
+│       ├── water quality monitoring
+│       ├── water quality forecasting
+│       ├── water quality modeling
+│       ├── water quality analysis
+│       ├── water quality assessment
+│       ├── chemical oxygen demand / COD measurement
+│       ├── chemical oxygen demand / COD monitoring
+└── social sciences   
+    ├── water conflict
+    ├── water crisis
+    ├── water scarcity
+    ├── water education
+    ├── water literacy
+    ├── water management
+    ├── water accounting
+    ├── water *use (water reuse)
+    └── water consumption
