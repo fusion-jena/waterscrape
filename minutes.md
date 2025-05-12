@@ -9,6 +9,23 @@
 ## Next steps
 -->
 
+
+# 02.05.2025
+
+- [ ] create sketch/overview of DBs
+
+- [x] remove redundant category table and references
+- [x] handle multiple hashtags per post
+
+
+# 18.04.2025
+
+- does it make sense to search by hashtag directly?
+  * use a combination of additional search terms/hashtag to better filter posts
+- does it make sense to infer keyword/category by the hashtag? 
+
+- next meeting on 02.05.2025
+
 # 07.03.2025
 
 - either copy database locally and then modify contents
@@ -19,7 +36,7 @@
 
 Optional:
 
-- [ ] cleanup code/breakup big function
+- [x] cleanup code/breakup big function
 
 Next meeting scheduled 21.03. 13:00.
 
@@ -27,7 +44,7 @@ Next meeting scheduled 21.03. 13:00.
 
 - [x] Get MySQL Workbench running (fix dependency error)
 - [x] Find out how size of tables 
-  - [ ] Make copies of tables (+ Python scripts)
+  - [x] Make copies of tables (+ Python scripts)
 
 - [ ] start with point 2 in https://pad.uni-jena.de/nE-N5lt9T3GgjEgZ23rNKw# 
 
