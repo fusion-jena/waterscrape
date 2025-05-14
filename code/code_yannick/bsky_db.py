@@ -153,6 +153,8 @@ def insert_hashtag(cursorDB, post, keywords, keyword_category):
                 )
             )
 
+            print(f"Hashtag inserted: {hashtag_id}")
+
 
 def insert_media(cursorDB, post):
     post_id = post.get("cid")
