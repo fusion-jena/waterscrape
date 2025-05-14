@@ -86,7 +86,38 @@ def insert_post(cursor, status, keywords, keyword_category):
 
 
 def insert_hashtag(cursor, status):
-    ...
+    post_id = status.get('id')
+    tags = [tag["name"] for tag in status["tags"]]
+
+    for tag in tags:
+        cursor.execute("SELECT * FROM hashtags WHERE hashtag=%s", (tag,))
+        tag_exists = cursor.fetchone()
+
+        if not tag_exists:
+
+            cursor.execute(
+                (
+                    "INSERT INTO hashtags "
+
+                    "(hashtag)"
+                    "VALUES (%s)"
+                ),
+                (
+                    tag,
+                )
+            )
+
+            hashtag_id = cursor.lastrowid
+            cursor.execute(
+                (
+                    "INSERT INTO post_hashtags (post_id, hashtag_id) "
+                    "VALUES (%s, %s)"
+                ),
+                (
+                    post_id, hashtag_id
+                )
+            )
+            print(f"Hashtag inserted: {hashtag_id}")
 
 
 def insert_poll(cursor, status):
@@ -228,6 +259,7 @@ def extract_mastodon_db(keywords, keyword_category=None):
                 try:
                     insert_account(cursor, status)
                     insert_post(cursor, status, keywords, keyword_category)
+                    insert_hashtag(cursor, status)
                     insert_poll(cursor, status)
                     insert_media(cursor, status)
 
