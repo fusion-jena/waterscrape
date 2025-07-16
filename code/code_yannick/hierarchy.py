@@ -36,8 +36,8 @@ def get_keyword_dict():
                     indentation == 12
                     or category == "social sciences" and indentation == 8
                 ):
-                    keyword = "".join(c for c in line if ord(c) < 128).strip()
-                    # print(keyword)
+                    keyword = "".join(c for c in line if ord(c) < 128)
+                    keyword = keyword.split("(")[0].strip()
                     keyword_dict[keyword] = category
 
     return keyword_dict
