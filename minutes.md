@@ -9,10 +9,26 @@
 ## Next steps
 -->
 
+TODO:
+- fix attachment bug
+- don't manually provide keyword arguments
+  * read all keywords from hierarchy
+
+- add explanation in README for cron job + SSH
+
+- find out whether cron jobs run in parallel
+  * if not, maybe make mastodon and bluesky run at different times
+
+- cleaning HTML tags and links
+
+# 13.06.2025
+
+- ssh <local-account>@<hostname?>.inf-bb.uni-jena.de
+- use `cron` job to schedule
 
 # 02.05.2025
 
-- [ ] create sketch/overview of DBs
+- [x] create sketch/overview of DBs
 
 - [x] remove redundant category table and references
 - [x] handle multiple hashtags per post
