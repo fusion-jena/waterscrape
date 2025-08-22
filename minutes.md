@@ -10,6 +10,18 @@
 -->
 
 TODO:
+- change datatype from keyword to longer varchar
+- ensure all queries are lowercase
+
+hierarchy todos:
+- add info to (separate) README about:
+  * asterisk, suffix, prefix and slash
+  * potentially handle suffix/prefix in code as well for future use ?
+
+- next meeting with three of us potentially:
+  * 25th of august 11-12:30
+
+TODO:
 - fix attachment bug
 - don't manually provide keyword arguments
   * read all keywords from hierarchy
