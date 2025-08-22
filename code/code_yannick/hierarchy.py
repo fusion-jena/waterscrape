@@ -5,6 +5,30 @@ keyword_categories = [
 ]
 
 
+get_keyword_variations():
+    # Resolve variations in keyword names
+    if "*" in keywords:
+        keyword_list = [
+            keywords.replace("*", ""),
+            keywords.replace("*", "-"),
+            keywords.replace("*", " ")
+        ]
+    elif "/" in keywords:
+        split = keywords.split("/")
+        fst = split[0]
+        snd_split = split[1].strip().split(" ")
+        snd = snd_split[0] + " "
+        keyword_list = [
+            fst + snd_split[1],
+            snd + snd_split[1]
+        ]
+    # TODO: Handle affixes with specific notation in future?
+    else:
+        keyword_list = [keywords]
+
+    return keyword_list
+
+
 def get_keyword_dict():
     """
     Reads the given keyword hierarchy into a dictionary for inference.

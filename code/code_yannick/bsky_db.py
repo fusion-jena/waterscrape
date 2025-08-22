@@ -4,6 +4,7 @@ import mysql.connector
 from dotenv import load_dotenv
 from datetime import datetime
 
+from hierarchy import get_keyword_variations
 from utils import iso_to_mysql_datetime
 
 
@@ -242,15 +243,9 @@ def extract_bsky_db(keywords, keyword_category=None):
         keyword_dict = get_keyword_dict()
         keyword_category = keyword_dict[keywords]
 
-    if "*" in keywords:
-        keyword_list = [
-            keywords.replace("*", ""),
-            keywords.replace("*", "-"),
-            keywords.replace("*", " ")
-        ]
-    else:
-        keyword_list = [keywords]
+    keyword_list = get_keyword_variations(keywords)
 
+    return
     load_dotenv()
 
     # Connect to ThWIC-DB:
