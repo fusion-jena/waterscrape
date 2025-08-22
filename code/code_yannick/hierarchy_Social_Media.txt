@@ -33,7 +33,8 @@ Topics in ThWIC
 │   │   ├── fresh*water flow
 │   │   ├── sewage flow
 │   │   ├── water flow
-│   │   ├── water micropollutant*
+│   │   ├── water micropollutant
+│   │   ├── water micropollution
 │   │   ├── water treatment
 │   │   ├── water purification
 │   │   ├── zero liquid discharge
@@ -60,5 +61,6 @@ Topics in ThWIC
     ├── water literacy
     ├── water management
     ├── water accounting
-    ├── water *use (water reuse)
+    ├── water use
+    ├── water reuse
     └── water consumption
