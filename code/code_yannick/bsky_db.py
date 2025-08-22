@@ -245,7 +245,6 @@ def extract_bsky_db(keywords, keyword_category=None):
 
     keyword_list = get_keyword_variations(keywords)
 
-    return
     load_dotenv()
 
     # Connect to ThWIC-DB:

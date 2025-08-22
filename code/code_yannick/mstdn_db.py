@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
+from hierarchy import get_keyword_variations
 from utils import iso_to_mysql_datetime
 
 
@@ -179,6 +180,8 @@ def extract_mastodon_db(keywords, keyword_category=None):
         keyword_dict = get_keyword_dict()
         keyword_category = keyword_dict[keywords]
 
+    keyword_list = get_keyword_variations(keywords)
+
     load_dotenv()
 
     # Connect to ThWIC-DB:
@@ -254,22 +257,22 @@ def extract_mastodon_db(keywords, keyword_category=None):
 
             # posts of an API-Request will be pushed into the ThWIC-DB:
             for status in statuses:
-                # extract account information:
+                for kw in keyword_list:
+                    # extract account information:
+                    try:
+                        insert_account(cursor, status)
+                        insert_post(cursor, status, kw, keyword_category)
+                        insert_hashtag(cursor, status)
+                        insert_poll(cursor, status)
+                        insert_media(cursor, status)
 
-                try:
-                    insert_account(cursor, status)
-                    insert_post(cursor, status, keywords, keyword_category)
-                    insert_hashtag(cursor, status)
-                    insert_poll(cursor, status)
-                    insert_media(cursor, status)
+                        # save the Accounts/Posts/Attachments/Polls in ThWIC-DB:
+                        db_connection.commit()
 
-                    # save the Accounts/Posts/Attachments/Polls in ThWIC-DB:
-                    db_connection.commit()
-
-                # handle Errors that occur when inserting into ThWIC-DB:
-                except mysql.connector.Error as err:
-                    print(f"Error inserting in DB: {err}")
-                    db_connection.rollback()
+                    # handle Errors that occur when inserting into ThWIC-DB:
+                    except mysql.connector.Error as err:
+                        print(f"Error inserting in DB: {err}")
+                        db_connection.rollback()
 
             # increase offset for pagination, to get the next posts:
             offset += len(statuses)

@@ -5,8 +5,10 @@ keyword_categories = [
 ]
 
 
-get_keyword_variations():
-    # Resolve variations in keyword names
+def get_keyword_variations(keywords):
+    keywords = keywords.lower()
+    # TODO: Sometimes removing the space doesn't make sense
+    # e.g. surfacewater, drinkingwater...
     if "*" in keywords:
         keyword_list = [
             keywords.replace("*", ""),
