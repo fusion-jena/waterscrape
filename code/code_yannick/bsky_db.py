@@ -242,6 +242,15 @@ def extract_bsky_db(keywords, keyword_category=None):
         keyword_dict = get_keyword_dict()
         keyword_category = keyword_dict[keywords]
 
+    if "*" in keywords:
+        keyword_list = [
+            keywords.replace("*", ""),
+            keywords.replace("*", "-"),
+            keywords.replace("*", " ")
+        ]
+    else:
+        keyword_list = [keywords]
+
     load_dotenv()
 
     # Connect to ThWIC-DB:
@@ -301,19 +310,20 @@ def extract_bsky_db(keywords, keyword_category=None):
 
         # Information of an API-Request will be pushed into the ThWIC-DB:
         for post in posts:
-            try:
-                insert_account(cursorDB, post, headers)
-                insert_post(cursorDB, post, keywords, keyword_category)
-                # keywords might not be necessary ?
-                insert_hashtag(cursorDB, post, keywords, keyword_category)
-                insert_media(cursorDB, post)
+            for kw in keyword_list:
+                try:
+                    insert_account(cursorDB, post, headers)
+                    insert_post(cursorDB, post, kw, keyword_category)
+                    # keywords might not be necessary ?
+                    insert_hashtag(cursorDB, post, kw, keyword_category)
+                    insert_media(cursorDB, post)
 
-                # Save the Accounts/Posts/Attachments in ThWIC-DB:
-                db_connection.commit()
+                    # Save the Accounts/Posts/Attachments in ThWIC-DB:
+                    db_connection.commit()
 
-            except mysql.connector.Error as err:
-                print(f"Error inserting in DB: {err}")
-                db_connection.rollback()
+                except mysql.connector.Error as err:
+                    print(f"Error inserting in DB: {err}")
+                    db_connection.rollback()
 
         # Increase cursor for pagination, to get the next posts:
         cursor += len(posts)
