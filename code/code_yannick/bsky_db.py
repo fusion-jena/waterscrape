@@ -11,10 +11,6 @@ from utils import iso_to_mysql_datetime
 base_url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
 profile_url = "https://bsky.social/xrpc/app.bsky.actor.getProfile"
 
-# TODO: Make these environment variables
-BLUESKY_HANDLE = "jubo.bsky.social"
-BLUESKY_APP_PASSWORD = "xc7o-c6sn-akwd-fnpx"
-
 
 def insert_account(cursorDB, post, headers):
     account = post.get("author")
@@ -256,6 +252,9 @@ def extract_bsky_db(keywords, keyword_category=None):
         database=os.getenv("DB_NAME")
     )
     cursorDB = db_connection.cursor()
+
+    BLUESKY_HANDLE = os.getenv("BLUESKY_HANDLE")
+    BLUESKY_APP_PASSWORD = os.getenv("BLUESKY_APP_PASSWORD")
 
     resp = requests.post(
         "https://bsky.social/xrpc/com.atproto.server.createSession",

@@ -13,9 +13,6 @@ from utils import iso_to_mysql_datetime
 search_url = "https://mastodon.social/api/v2/search"
 auth_url = "https://mastodon.social/api/v1/apps/verify_credentials"
 
-# Mastodon Authorization: the access_token can be copied from the Mastodon GUI
-ACCESS_TOKEN = "tTshb14OUIX5LjLo4ANbmPE2ZfUS_iOYAy0uWjruIfQ"
-
 
 def insert_account(cursor, status):
     account = status.get('account')
@@ -194,6 +191,8 @@ def extract_mastodon_db(keywords, keyword_category=None):
     )
     cursor = db_connection.cursor()
 
+    # Mastodon Authorization: the access_token can be copied from the Mastodon GUI
+    ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}"
     }
