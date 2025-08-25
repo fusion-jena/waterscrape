@@ -10,8 +10,8 @@
 -->
 
 TODO:
-- change datatype from keyword to longer varchar
-- ensure all queries are lowercase
+- [x] change datatype from keyword to longer varchar
+- [x] ensure all queries are lowercase
 
 hierarchy todos:
 - add info to (separate) README about:
@@ -23,12 +23,12 @@ hierarchy todos:
 
 TODO:
 - fix attachment bug
-- don't manually provide keyword arguments
+- [x] don't manually provide keyword arguments
   * read all keywords from hierarchy
 
-- add explanation in README for cron job + SSH
+- [x] add explanation in README for cron job + SSH
 
-- find out whether cron jobs run in parallel
+- [x] find out whether cron jobs run in parallel
   * if not, maybe make mastodon and bluesky run at different times
 
 - cleaning HTML tags and links
