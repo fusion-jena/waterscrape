@@ -76,3 +76,5 @@ Once the `sci-std-VPN` is active, connect to the SSH server with your given user
 ```bash
 $ ssh lab12cde@thwicsonar.inf-bb.uni-jena.de
 ```
+
+This repo can then be cloned and setup on the server with a virtual environment. Once this is done, one or multiple `cron` jobs can be submitted in order to automatically run the code whenever specified. Use `crontab -l` to check if the correct command and time have been submitted for each job.
