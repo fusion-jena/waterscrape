@@ -1,4 +1,8 @@
-file_path = "hierarchy_Social_Media.txt"
+
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(BASE_DIR, "hierarchy_Social_Media.txt")
 
 keyword_categories = [
     "natural sciences", "water and technology", "social sciences"
@@ -7,8 +11,6 @@ keyword_categories = [
 
 def get_keyword_variations(keywords):
     keywords = keywords.lower()
-    # TODO: Sometimes removing the space doesn't make sense
-    # e.g. surfacewater, drinkingwater...
     if "*" in keywords:
         keyword_list = [
             keywords.replace("*", ""),
@@ -46,7 +48,9 @@ def get_keyword_dict():
         keyword_dict = {}
         lines = f.readlines()
         for line in lines:
-            current_category = [cat for cat in keyword_categories if cat in line]
+            current_category = [
+                cat for cat in keyword_categories if cat in line
+            ]
             if current_category:
                 category = current_category
                 assert len(category) == 1
