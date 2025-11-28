@@ -279,7 +279,10 @@ def extract_bsky_db(keywords, keyword_category=None):
     limit = 100  # Max no. of posts retrieved from one single API-Request
 
     # "until no further search results are found":
-    while True:
+    i = 0
+    n_limit = 1_000
+    while True and i < n_limit:
+        i += 1
         params = {
             "q": keywords,
             "limit": limit,

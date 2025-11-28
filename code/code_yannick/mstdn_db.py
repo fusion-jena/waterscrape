@@ -214,7 +214,10 @@ def extract_mastodon_db(keywords, keyword_category=None):
     retry_attempts = 4
 
     # "until no further search results are found":
-    while True:
+    i = 0
+    n_limit = 1_000
+    while True and i < n_limit:
+        i += 1
         params = {
             'q': keywords,
             'offset': offset,
