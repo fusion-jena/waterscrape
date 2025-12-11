@@ -9,6 +9,9 @@
 ## Next steps
 -->
 
+- potentially change or remove rare keywords
+- find out if problem fixes itself with max limit on keyword searches
+
 TODO:
 - [x] change datatype from keyword to longer varchar
 - [x] ensure all queries are lowercase
