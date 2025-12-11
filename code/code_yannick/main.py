@@ -1,7 +1,7 @@
 import argparse
 from bsky_db import extract_bsky_db
 from mstdn_db import extract_mastodon_db
-from hierarchy import get_keyword_dict
+from topics.hierarchy import get_keyword_dict
 
 
 def scrape_with_keywords(platform, keywords, keyword_category):
@@ -15,6 +15,7 @@ def scrape_with_keywords(platform, keywords, keyword_category):
 
 def scrape_all_keywords(platform):
     for keyword, keyword_category in get_keyword_dict().items():
+        print("Scraping keyword", keyword)
         if platform == "mastodon":
             extract_mastodon_db(keyword, keyword_category)
         elif platform == "bluesky":
@@ -63,7 +64,7 @@ def main():
         # TODO: Make this dynamic
         print(
             "No keyword provided, using keywords from "
-            "hierarchy_Social_Media.txt"
+            "topics/hierarch-social-media.txt"
         )
         scrape_all_keywords(platforms[0])
 

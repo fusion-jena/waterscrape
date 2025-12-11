@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
-from hierarchy import get_keyword_variations
+from topics.hierarchy import get_keyword_variations
 from utils import iso_to_mysql_datetime, clean_html
 
 
@@ -174,7 +174,7 @@ def insert_media(cursor, status):
 
 def extract_mastodon_db(keywords, keyword_category=None):
     if not keyword_category:
-        from hierarchy import get_keyword_dict
+        from topics.hierarchy import get_keyword_dict
         keyword_dict = get_keyword_dict()
         keyword_category = keyword_dict[keywords]
 

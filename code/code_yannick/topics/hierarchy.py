@@ -2,7 +2,7 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(BASE_DIR, "hierarchy_Social_Media.txt")
+file_path = os.path.join(BASE_DIR, "hierarchy-social-media.txt")
 
 keyword_categories = [
     "natural sciences", "water and technology", "social sciences"
