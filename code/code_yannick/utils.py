@@ -6,6 +6,9 @@ def iso_to_mysql_datetime(iso_string):
     """
     Function to convert BlueSky datetime format (ISO) to MySQL datetime
     """
+    if iso_string is None:
+        return None
+
     try:
         # check if time zone ('Z') is included:
         if iso_string.endswith('Z'):
