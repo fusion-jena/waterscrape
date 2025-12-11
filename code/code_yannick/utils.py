@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from datetime import datetime
 
 
@@ -23,3 +24,12 @@ def iso_to_mysql_datetime(iso_string):
     except ValueError as e:
         print(f"Error converting iso to MySQL datetime: {e}")
         return None
+
+
+def clean_html(html):
+    # import warnings
+    # from bs4 import MarkupResemblesLocatorWarning
+    # warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+    return (
+        " ".join(BeautifulSoup(html, "html.parser").stripped_strings)
+    )

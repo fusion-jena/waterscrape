@@ -7,7 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from hierarchy import get_keyword_variations
-from utils import iso_to_mysql_datetime
+from utils import iso_to_mysql_datetime, clean_html
 
 
 search_url = "https://mastodon.social/api/v2/search"
@@ -60,6 +60,7 @@ def insert_post(cursor, status, keywords, keyword_category):
             domain = 'mastodon.social'
 
         # insert in ThWIC-DB:
+        content = clean_html(content)
         cursor.execute(
             "INSERT INTO posts (post_id, created_at, in_reply_to_id, is_sensitive, visibility, replies_count, reblogs_count, likes_count, content, from_platform, instance_name, keyword_category, keywords, date_first_request, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
@@ -71,7 +72,7 @@ def insert_post(cursor, status, keywords, keyword_category):
                 status.get('replies_count'),
                 status.get('reblogs_count'),
                 status.get('favourites_count'),
-                status.get('content'),
+                content,
                 'Mastodon',
                 domain,
                 keyword_category,
