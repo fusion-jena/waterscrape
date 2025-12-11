@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 from topics.hierarchy import get_keyword_variations
-from utils import iso_to_mysql_datetime
+from utils import iso_to_mysql_datetime, clean_html
 
 
 base_url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
@@ -75,6 +75,8 @@ def insert_post(cursorDB, post, keywords, keyword_category):
         else:
             parent_reply_uri = None
 
+        content = record.get('text')
+        content = clean_html(content)
         cursorDB.execute(
             (
                 "INSERT INTO posts "
@@ -96,7 +98,7 @@ def insert_post(cursorDB, post, keywords, keyword_category):
                 post.get("replyCount"),
                 post.get("repostCount"),
                 post.get("likeCount"),
-                record.get('text'),
+                content,
                 "BlueSky",
                 domain,
                 keyword_category,
