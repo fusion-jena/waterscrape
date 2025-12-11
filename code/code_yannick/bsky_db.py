@@ -209,8 +209,9 @@ def insert_media(cursorDB, post):
                 attachment_id = record_info.get("cid")
             else:
                 attachment_type = None
+                attachment_id = None
 
-            if attachment_type is not None:
+            if attachment_type is not None and attachment_id is not None:
                 cursorDB.execute(
                     "SELECT * FROM media_attachments "
                     "WHERE id_attachment=%s", (attachment_id,)
