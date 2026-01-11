@@ -9,6 +9,13 @@
 ## Next steps
 -->
 
+- is it possible to get the countries?
+  * as a complementary info: maybe do it by language  -> classifier/LM?
+- later analysis step: sentiment analysis?
+
+- look for conferences for report/paper
+  * ESWC potentially
+
 - potentially change or remove rare keywords
 - find out if problem fixes itself with max limit on keyword searches
 
