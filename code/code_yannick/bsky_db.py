@@ -77,13 +77,15 @@ def insert_post(cursorDB, post, keywords, keyword_category):
 
         content = record.get('text')
         content = clean_html(content)
+        langs = ",".join(record.get("langs"))
+
         cursorDB.execute(
             (
                 "INSERT INTO posts "
 
                 "(post_id, created_at, in_reply_to_id, is_sensitive, "
                 "visibility, replies_count, reblogs_count, likes_count, "
-                "content, from_platform, instance_name, keyword_category, "
+                "content, languages, from_platform, instance_name, keyword_category, "
                 "keywords, date_first_request, account_id) "
 
                 "VALUES "
@@ -99,6 +101,7 @@ def insert_post(cursorDB, post, keywords, keyword_category):
                 post.get("repostCount"),
                 post.get("likeCount"),
                 content,
+                langs,
                 "BlueSky",
                 domain,
                 keyword_category,
