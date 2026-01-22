@@ -1,7 +1,10 @@
 import argparse
+import os
+import mysql.connector
 from bsky_db import extract_bsky_db
 from mstdn_db import extract_mastodon_db
 from topics.hierarchy import get_keyword_dict
+from dotenv import load_dotenv
 
 
 def scrape_with_keywords(platform, keywords, keyword_category):
@@ -13,8 +16,35 @@ def scrape_with_keywords(platform, keywords, keyword_category):
         raise ValueError("Invalid social media platform provided.")
 
 
-def scrape_all_keywords(platform):
+def scrape_all_keywords(platform, k=None):
+    if k:
+        load_dotenv()
+
+        conn = mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
+        )
+
+        cursor = conn.cursor()
+
+        cursor.execute(f"""
+            SELECT keywords
+            FROM posts
+            WHERE keywords IS NOT NULL
+            GROUP BY keywords
+            HAVING COUNT(*) >= {k}
+        """)
+
+        valid_keywords = {row[0] for row in cursor.fetchall()}
+
     for keyword, keyword_category in get_keyword_dict().items():
+        if valid_keywords and keyword not in valid_keywords:
+            print(f"Skipping {keyword} with < {k} posts")
+            continue
+
         print("Scraping keyword", keyword)
         if platform == "mastodon":
             extract_mastodon_db(keyword, keyword_category)
@@ -50,11 +80,17 @@ def main():
         help="Category of keywords (enclosed in quotation marks",
         choices=["water conflict"]
     )
+    parser.add_argument(
+        "k",
+        type=int,
+        default=None,
+        help="Only keep keywords with >= k posts"
+    )
 
     args = parser.parse_args()
 
-    platforms, keywords, keyword_category = (
-        args.platforms, args.keywords, args.keyword_category
+    platforms, keywords, keyword_category, k = (
+        args.platforms, args.keywords, args.keyword_category, args.k
     )
 
     assert len(platforms) == 1
@@ -64,9 +100,9 @@ def main():
         # TODO: Make this dynamic
         print(
             "No keyword provided, using keywords from "
-            "topics/hierarch-social-media.txt"
+            "topics/hierarchy-social-media.txt"
         )
-        scrape_all_keywords(platforms[0])
+        scrape_all_keywords(platforms[0], k)
 
 
 if __name__ == '__main__':
