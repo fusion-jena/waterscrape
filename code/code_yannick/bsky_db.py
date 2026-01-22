@@ -77,7 +77,10 @@ def insert_post(cursorDB, post, keywords, keyword_category):
 
         content = record.get('text')
         content = clean_html(content)
-        langs = ",".join(record.get("langs"))
+        langs = record.get("langs")
+        
+        if type(langs) is list:
+            langs = ",".join(langs)
 
         cursorDB.execute(
             (
@@ -89,7 +92,7 @@ def insert_post(cursorDB, post, keywords, keyword_category):
                 "keywords, date_first_request, account_id) "
 
                 "VALUES "
-                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             ),
             (
                 post_id,
