@@ -25,6 +25,8 @@ cursor = conn.cursor()
 cursor.execute("SELECT DISTINCT keywords FROM posts WHERE keywords IS NOT NULL")
 keywords_list = [row[0] for row in cursor.fetchall()]
 
+# TODO: add valid_keywords logic from main script
+
 def get_sentiment(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True)
     outputs = model(**inputs)
@@ -39,22 +41,32 @@ data = []
 
 for keyword in keywords_list:
     cursor.execute("""
-        SELECT post_id, content
+        SELECT post_id, content, created_at
         FROM posts
         WHERE keywords = %s AND content IS NOT NULL
+        ORDER BY created_at
         LIMIT 500
     """, (keyword,))
     
     rows = cursor.fetchall()
     print(f"Processing keyword: '{keyword}' ({len(rows)} posts)")
 
-    for post_id, content in rows:
+    for post_id, content, created_at in rows:
         sentiment_score = get_sentiment(content)
-        data.append({'keyword': keyword, 'post_id': post_id, 'sentiment': sentiment_score})
+        data.append({
+            'keyword': keyword,
+            'post_id': post_id,
+            'date': created_at,
+            'sentiment': sentiment_score
+        })
 
 cursor.close()
 conn.close()
 
 df = pd.DataFrame(data)
-df.to_csv("post_sentiments.csv", index=False)
+
+df['date'] = pd.to_datetime(df['date'])
+df = df.sort_values('date')
+df.to_csv("post_sentiments_time.csv", index=False)
+
 print("Saved sentiment scores to post_sentiments.csv")
