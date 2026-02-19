@@ -1,4 +1,5 @@
-from bs4 import BeautifulSoup
+import warnings
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from datetime import datetime
 
 
@@ -30,9 +31,7 @@ def iso_to_mysql_datetime(iso_string):
 
 
 def clean_html(html):
-    # import warnings
-    # from bs4 import MarkupResemblesLocatorWarning
-    # warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+    warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
     return (
         " ".join(BeautifulSoup(html, "html.parser").stripped_strings)
     )
