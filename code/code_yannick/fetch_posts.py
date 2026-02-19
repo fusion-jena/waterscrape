@@ -27,14 +27,29 @@ print(f"Found {len(keywords_list)} keyword(s): {keywords_list}\n")
 
 data = []
 
+MIN_COUNT = 1_000
+MAX_COUNT = 10_000
+
 for i, keyword in enumerate(keywords_list, start=1):
     cursor.execute("""
+        SELECT COUNT(*) FROM posts
+        WHERE keywords = %s AND content IS NOT NULL AND content != ''
+        AND created_at >= '2016-01-01'
+    """, (keyword,))
+
+    count = cursor.fetchone()[0]
+
+    if count < MIN_COUNT:
+        print(f"[{i}/{len(keywords_list)}] Skipping keyword: '{keyword}' (only {count} posts)")
+        continue
+
+    cursor.execute(f"""
         SELECT post_id, content, created_at
         FROM posts
         WHERE keywords = %s AND content IS NOT NULL AND content != ''
         AND created_at >= '2016-01-01'
         ORDER BY created_at
-        LIMIT 500
+        LIMIT {MAX_COUNT}
     """, (keyword,))
 
     rows = cursor.fetchall()
