@@ -7,12 +7,17 @@ import torch.nn.functional as F
 from dotenv import load_dotenv
 from tqdm import tqdm
 
+
 MODEL_NAME = "nlptown/bert-base-multilingual-uncased-sentiment"
 
 print(f"Loading tokenizer and model: '{MODEL_NAME}'...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 print("Model and tokenizer loaded successfully.\n")
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}\n")
+model = model.to(device)
 
 load_dotenv()
 
@@ -37,10 +42,10 @@ print(f"Found {len(keywords_list)} keyword(s): {keywords_list}\n")
 
 def get_sentiment(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
     outputs = model(**inputs)
     probs = F.softmax(outputs.logits, dim=-1)
-    # nlptown model outputs 1-5 stars, convert to -1..1
-    score = torch.arange(1, 6).float()
+    score = torch.arange(1, 6).float().to(device)
     sentiment = (probs * score).sum().item()
     sentiment = (sentiment - 3) / 2
     return sentiment
