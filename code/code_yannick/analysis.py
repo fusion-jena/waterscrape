@@ -5,13 +5,18 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import torch.nn.functional as F
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 MODEL_NAME = "nlptown/bert-base-multilingual-uncased-sentiment"
+
+print(f"Loading tokenizer and model: '{MODEL_NAME}'...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+print("Model and tokenizer loaded successfully.\n")
 
 load_dotenv()
 
+print("Connecting to database...")
 conn = mysql.connector.connect(
     host=os.getenv("DB_HOST"),
     port=os.getenv("DB_PORT"),
@@ -19,11 +24,14 @@ conn = mysql.connector.connect(
     password=os.getenv("DB_PASSWORD"),
     database=os.getenv("DB_NAME")
 )
+print(f"Connected successfully to '{os.getenv('DB_NAME')}' at {os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}.\n")
 
 cursor = conn.cursor()
 
+print("Fetching distinct keywords from posts...")
 cursor.execute("SELECT DISTINCT keywords FROM posts WHERE keywords IS NOT NULL")
 keywords_list = [row[0] for row in cursor.fetchall()]
+print(f"Found {len(keywords_list)} keyword(s): {keywords_list}\n")
 
 # TODO: add valid_keywords logic from main script
 
@@ -38,8 +46,10 @@ def get_sentiment(text):
     return sentiment
 
 data = []
+total_posts = 0
 
-for keyword in keywords_list:
+print("Starting sentiment analysis...\n")
+for i, keyword in enumerate(keywords_list, start=1):
     cursor.execute("""
         SELECT post_id, content, created_at
         FROM posts
@@ -47,11 +57,11 @@ for keyword in keywords_list:
         ORDER BY created_at
         LIMIT 500
     """, (keyword,))
-    
-    rows = cursor.fetchall()
-    print(f"Processing keyword: '{keyword}' ({len(rows)} posts)")
 
-    for post_id, content, created_at in rows:
+    rows = cursor.fetchall()
+    print(f"[{i}/{len(keywords_list)}] Processing keyword: '{keyword}' ({len(rows)} posts)...")
+
+    for post_id, content, created_at in tqdm(rows, desc=f"  '{keyword}'", unit="post"):
         sentiment_score = get_sentiment(content)
         data.append({
             'keyword': keyword,
@@ -60,13 +70,19 @@ for keyword in keywords_list:
             'sentiment': sentiment_score
         })
 
+    total_posts += len(rows)
+    print(f"  ✓ Done with '{keyword}'.\n")
+
+print(f"Sentiment analysis complete. Total posts processed: {total_posts}\n")
+
 cursor.close()
 conn.close()
+print("Database connection closed.\n")
 
 df = pd.DataFrame(data)
-
 df['date'] = pd.to_datetime(df['date'])
 df = df.sort_values('date')
-df.to_csv("post_sentiments_time.csv", index=False)
 
-print("Saved sentiment scores to post_sentiments.csv")
+output_file = "post_sentiments_time.csv"
+df.to_csv(output_file, index=False)
+print(f"Saved {len(df)} sentiment scores to '{output_file}'.")
