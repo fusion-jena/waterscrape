@@ -74,9 +74,8 @@ df = pd.DataFrame(data)
 df['date'] = pd.to_datetime(df['date'])
 df = df.sort_values('date')
 
-print(df[df.isnull().any(axis=1)])
-
 df = df.dropna()
+df = df[df['content'].str.strip() != '']
 
 output_file = "posts.csv"
 df.to_csv(output_file, index=False)
