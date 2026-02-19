@@ -32,6 +32,7 @@ for i, keyword in enumerate(keywords_list, start=1):
         SELECT post_id, content, created_at
         FROM posts
         WHERE keywords = %s AND content IS NOT NULL AND content != ''
+        AND created_at >= '2016-01-01'
         ORDER BY created_at
         LIMIT 500
     """, (keyword,))
