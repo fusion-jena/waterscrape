@@ -47,7 +47,7 @@ for i, keyword in enumerate(keywords_list, start=1):
         SELECT post_id, content, created_at
         FROM posts
         WHERE keywords = %s AND content IS NOT NULL AND content != ''
-        AND created_at >= '2016-01-01'
+        AND content != ' ' AND created_at >= '2016-01-01'
         ORDER BY created_at
         LIMIT {MAX_COUNT}
     """, (keyword,))
@@ -73,6 +73,10 @@ print("Database connection closed.\n")
 df = pd.DataFrame(data)
 df['date'] = pd.to_datetime(df['date'])
 df = df.sort_values('date')
+
+print(df[df.isnull().any(axis=1)])
+
+df = df.dropna()
 
 output_file = "posts.csv"
 df.to_csv(output_file, index=False)
