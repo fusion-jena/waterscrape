@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import mysql.connector
 from dotenv import load_dotenv
+from utils import clean_html
 
 load_dotenv()
 
@@ -43,7 +44,7 @@ for i, keyword in enumerate(keywords_list, start=1):
             'keyword': keyword,
             'post_id': post_id,
             'date': created_at,
-            'content': content
+            'content': clean_html(content)
         })
 
 cursor.close()
