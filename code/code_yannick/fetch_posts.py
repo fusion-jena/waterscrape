@@ -31,7 +31,7 @@ for i, keyword in enumerate(keywords_list, start=1):
     cursor.execute("""
         SELECT post_id, content, created_at
         FROM posts
-        WHERE keywords = %s AND content IS NOT NULL
+        WHERE keywords = %s AND content IS NOT NULL AND content != ''
         ORDER BY created_at
         LIMIT 500
     """, (keyword,))
@@ -40,6 +40,9 @@ for i, keyword in enumerate(keywords_list, start=1):
     print(f"[{i}/{len(keywords_list)}] Fetched {len(rows)} posts for keyword: '{keyword}'")
 
     for post_id, content, created_at in rows:
+        if not isinstance(content, str) or not content.strip(): 
+            continue
+
         data.append({
             'keyword': keyword,
             'post_id': post_id,
