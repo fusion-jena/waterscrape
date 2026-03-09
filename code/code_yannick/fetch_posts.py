@@ -42,29 +42,51 @@ for i, keyword in enumerate(keywords_list, start=1):
     if count < MIN_COUNT:
         print(f"[{i}/{len(keywords_list)}] Skipping keyword: '{keyword}' (only {count} posts)")
         continue
-
     cursor.execute(f"""
-        SELECT post_id, content, created_at
-        FROM posts
-        WHERE keywords = %s AND content IS NOT NULL AND content != ''
-        AND content != ' ' AND created_at >= '2016-01-01'
-        ORDER BY created_at
-        LIMIT {MAX_COUNT}
+            SELECT post_id, content, created_at, likes_count
+            FROM posts
+            WHERE keywords = %s AND content IS NOT NULL AND content != ''
+            AND content != ' ' AND created_at >= '2016-01-01'
+            ORDER BY created_at
+            LIMIT {MAX_COUNT}
     """, (keyword,))
 
     rows = cursor.fetchall()
     print(f"[{i}/{len(keywords_list)}] Fetched {len(rows)} posts for keyword: '{keyword}'")
 
-    for post_id, content, created_at in rows:
-        if not isinstance(content, str) or not content.strip(): 
+    for post_id, content, created_at, likes_count in rows:
+        if not isinstance(content, str) or not content.strip():
             continue
 
         data.append({
             'keyword': keyword,
             'post_id': post_id,
             'date': created_at,
-            'content': clean_html(content)
+            'content': clean_html(content),
+            'likes_count': likes_count
         })
+    # cursor.execute(f"""
+    #     SELECT post_id, content, created_at
+    #     FROM posts
+    #     WHERE keywords = %s AND content IS NOT NULL AND content != ''
+    #     AND content != ' ' AND created_at >= '2016-01-01'
+    #     ORDER BY created_at
+    #     LIMIT {MAX_COUNT}
+    # """, (keyword,))
+    #
+    # rows = cursor.fetchall()
+    # print(f"[{i}/{len(keywords_list)}] Fetched {len(rows)} posts for keyword: '{keyword}'")
+    #
+    # for post_id, content, created_at in rows:
+    #     if not isinstance(content, str) or not content.strip(): 
+    #         continue
+    #
+    #     data.append({
+    #         'keyword': keyword,
+    #         'post_id': post_id,
+    #         'date': created_at,
+    #         'content': clean_html(content)
+    #     })
 
 cursor.close()
 conn.close()
@@ -77,6 +99,6 @@ df = df.sort_values('date')
 df = df.dropna()
 df = df[df['content'].str.strip() != '']
 
-output_file = "posts.csv"
+output_file = "posts_likes.csv"
 df.to_csv(output_file, index=False)
 print(f"Saved {len(df)} posts to '{output_file}'.")
