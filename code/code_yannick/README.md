@@ -7,10 +7,13 @@ Currently, we use `main.py` to extract data on a certain keyword and keyword cat
 Example usage of the script:
 
 ```bash
-$ python3 main.py bluesky --keywords "water scarcity" --keyword_category "water conflict"
+$ python3 main.py bluesky 1000 --keywords "water scarcity" --keyword_category "water conflict"
 ```
 
-If the `keywords` and `keyword_category` arguments are not provided explicitly, the script will run the scraping process for all keywords contained in the file `hierarchy_Social_Media.txt`.
+If the `keywords` and `keyword_category` arguments are not provided explicitly, the script will run the scraping process for all keywords contained in the file `hierarchy-social-media.txt`.
+
+Due to the scarcity of some of the rare keywords, we provide an additional argument that specifies a minimum post number for a given keyword. For example, if a given keyword has less than `k = 1000` posts, it is omitted from the scraping process and not taken into consideration for further analysis.
+
 
 ## Database structure
 
@@ -78,3 +81,24 @@ $ ssh lab12cde@thwicsonar.inf-bb.uni-jena.de
 ```
 
 This repo can then be cloned and setup on the server with a virtual environment. Once this is done, one or multiple `cron` jobs can be submitted in order to automatically run the code whenever specified. Use `crontab -l` to check if the correct command and time have been submitted for each job.
+
+### Sentiment analysis
+
+The sentiment analysis is designed to take place in two separate steps. The `fetch_posts.py` saves relevant columns from the database table to a CSV table. For faster computation, we run the sentiment analysis from a separate Draco cluster with the use of GPUs. This results in the following workflow from KSZ:
+
+```text
+$ python3 fetch_posts.py
+$ scp posts_likes.csv qe75hep@login1.draco.uni-jena.de:/home/qe75hep/yannick_hiwi/code/code_yannick/posts_likes.csv
+```
+
+Then login to Draco for the analysis step:
+
+```text
+$ ssh qe75hep@login1.draco.uni-jena.de
+$ cd yannick_hiwi/code/code_yannick
+```
+
+And submit a Slurm job:
+```text
+$ sbatch run.sh
+```
