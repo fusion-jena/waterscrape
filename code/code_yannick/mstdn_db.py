@@ -41,50 +41,47 @@ def insert_account(cursor, status):
 
 
 def insert_post(cursor, status, keywords, keyword_category):
-    # INSERT into posts table:
-    # check if post already exists in ThWIC-DB:
     post_id = status.get('id')
-    cursor.execute("SELECT * FROM posts WHERE post_id=%s", (post_id,))
-    post_exists = cursor.fetchone()
-
     account = status.get('account')
     account_id = account.get('id')
 
-    # post will only be inserted if it doesn't already exist in ThWIC-DB:
-    if not post_exists:
-        # extract domain from acct or set to mastodon.social
-        acct = account.get('acct')
-        if '@' in acct:
-            domain = acct.split('@')[1]
-        else:
-            domain = 'mastodon.social'
+    acct = account.get('acct')
+    domain = acct.split('@')[1] if '@' in acct else 'mastodon.social'
 
-        # insert in ThWIC-DB:
-        content = status.get('content')
-        content = clean_html(content)
+    content = clean_html(status.get('content'))
+    language = status.get("language")
 
-        cursor.execute(
-            "INSERT INTO posts (post_id, created_at, in_reply_to_id, is_sensitive, visibility, replies_count, reblogs_count, likes_count, content, languages, from_platform, instance_name, keyword_category, keywords, date_first_request, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (
-                post_id,
-                iso_to_mysql_datetime(status.get('created_at')),
-                status.get('in_reply_to_id'),
-                status.get('sensitive'),
-                status.get('visibility'),
-                status.get('replies_count'),
-                status.get('reblogs_count'),
-                status.get('favourites_count'),
-                content,
-                status.get("language"),
-                'Mastodon',
-                domain,
-                keyword_category,
-                keywords,
-                datetime.now(),
-                account_id
-            )
+    cursor.execute(
+        "INSERT IGNORE INTO posts (post_id, created_at, in_reply_to_id, is_sensitive, visibility, replies_count, reblogs_count, likes_count, content, languages, from_platform, instance_name, keyword_category, keywords, date_first_request, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (
+            post_id,
+            iso_to_mysql_datetime(status.get('created_at')),
+            status.get('in_reply_to_id'),
+            status.get('sensitive'),
+            status.get('visibility'),
+            status.get('replies_count'),
+            status.get('reblogs_count'),
+            status.get('favourites_count'),
+            content,
+            language,
+            'Mastodon',
+            domain,
+            keyword_category,
+            keywords,
+            datetime.now(),
+            account_id
         )
+    )
+
+    if cursor.rowcount == 1:
         print(f"Post inserted: {post_id}")
+        if language:
+            cursor.execute(
+                "INSERT IGNORE INTO post_languages (post_id, language) VALUES (%s, %s)",
+                (post_id, language)
+            )
+    else:
+        print(f"Post skipped (already exists): {post_id}")
 
 
 def insert_hashtag(cursor, status):
