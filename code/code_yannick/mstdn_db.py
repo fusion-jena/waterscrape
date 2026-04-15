@@ -1,13 +1,15 @@
 import requests
+import re
 import json
 import time
 import mysql.connector
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+from html import unescape
 
 from topics.hierarchy import get_keyword_variations
-from utils import iso_to_mysql_datetime, clean_html
+from utils import iso_to_mysql_datetime, clean_html, is_noise
 
 
 search_url = "https://mastodon.social/api/v2/search"
@@ -86,37 +88,42 @@ def insert_post(cursor, status, keywords, keyword_category):
 
 def insert_hashtag(cursor, status):
     post_id = status.get('id')
-    tags = [tag["name"] for tag in status["tags"]]
+
+    tags = [tag["name"] for tag in status.get("tags", [])]
 
     for tag in tags:
-        cursor.execute("SELECT * FROM hashtags WHERE hashtag=%s", (tag,))
-        tag_exists = cursor.fetchone()
 
-        if not tag_exists:
+        tag = unescape(tag).strip().lower().lstrip("#")
 
+        if is_noise(tag) or not tag:
+            continue
+
+        # 1. GET OR CREATE HASHTAG
+        cursor.execute(
+            "SELECT hashtag_id FROM hashtags WHERE hashtag=%s",
+            (tag,)
+        )
+        row = cursor.fetchone()
+
+        if row:
+            hashtag_id = row["hashtag_id"]
+        else:
             cursor.execute(
-                (
-                    "INSERT INTO hashtags "
-
-                    "(hashtag)"
-                    "VALUES (%s)"
-                ),
-                (
-                    tag,
-                )
+                "INSERT INTO hashtags (hashtag) VALUES (%s)",
+                (tag,)
             )
-
             hashtag_id = cursor.lastrowid
-            cursor.execute(
-                (
-                    "INSERT INTO post_hashtags (post_id, hashtag_id) "
-                    "VALUES (%s, %s)"
-                ),
-                (
-                    post_id, hashtag_id
-                )
-            )
-            print(f"Hashtag inserted: {hashtag_id}")
+
+        # 2. ALWAYS CREATE RELATION
+        cursor.execute(
+            """
+            INSERT IGNORE INTO post_hashtags (post_id, hashtag_id)
+            VALUES (%s, %s)
+            """,
+            (post_id, hashtag_id)
+        )
+
+        print(f"Linked #{tag} → post {post_id}")
 
 
 def insert_poll(cursor, status):

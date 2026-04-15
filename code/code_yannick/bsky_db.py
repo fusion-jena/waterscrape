@@ -3,9 +3,10 @@ import requests
 import mysql.connector
 from dotenv import load_dotenv
 from datetime import datetime
+from html import unescape
 
 from topics.hierarchy import get_keyword_variations
-from utils import iso_to_mysql_datetime, clean_html
+from utils import iso_to_mysql_datetime, clean_html, is_noise
 
 
 base_url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
@@ -109,6 +110,8 @@ def insert_post(cursorDB, post, keywords, keyword_category):
             )
     else:
         print(f"Post skipped (already exists): {post_id}")
+
+
 def insert_hashtag(cursorDB, post, keywords, keyword_category):
     record = post["record"]
 
@@ -123,35 +126,36 @@ def insert_hashtag(cursorDB, post, keywords, keyword_category):
         tags = []
 
     for tag in tags:
-        cursorDB.execute("SELECT * FROM hashtags WHERE hashtag=%s", (tag,))
-        tag_exists = cursorDB.fetchone()
 
-        if not tag_exists:
+        tag = unescape(tag).strip().lower().lstrip("#")
 
+        if is_noise(tag) or not tag:
+            continue
+
+        cursorDB.execute(
+            "SELECT hashtag_id FROM hashtags WHERE hashtag=%s",
+            (tag,)
+        )
+        row = cursorDB.fetchone()
+
+        if row:
+            hashtag_id = row["hashtag_id"]
+        else:
             cursorDB.execute(
-                (
-                    "INSERT INTO hashtags "
-
-                    "(hashtag)"
-                    "VALUES (%s)"
-                ),
-                (
-                    tag,
-                )
+                "INSERT INTO hashtags (hashtag) VALUES (%s)",
+                (tag,)
             )
-
             hashtag_id = cursorDB.lastrowid
-            cursorDB.execute(
-                (
-                    "INSERT INTO post_hashtags (post_id, hashtag_id) "
-                    "VALUES (%s, %s)"
-                ),
-                (
-                    post_id, hashtag_id
-                )
-            )
 
-            print(f"Hashtag inserted: {hashtag_id}")
+        cursorDB.execute(
+            """
+            INSERT IGNORE INTO post_hashtags (post_id, hashtag_id)
+            VALUES (%s, %s)
+            """,
+            (post_id, hashtag_id)
+        )
+
+        print(f"Linked #{tag} → post {post_id}")
 
 
 def insert_media(cursorDB, post):
