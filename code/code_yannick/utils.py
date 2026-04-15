@@ -1,3 +1,4 @@
+import re
 import warnings
 from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from datetime import datetime
@@ -35,3 +36,32 @@ def clean_html(html):
     return (
         " ".join(BeautifulSoup(html, "html.parser").stripped_strings)
     )
+
+
+def is_noise(tag):
+    """
+    This function returns `True` if a hashtag contains only
+    'noise', i.e., does not contain meaningful information.
+    tag = tag.lstrip('#')
+    """
+
+    if not tag:
+        return True
+
+    # explicit emoji handling (simple Unicode range fallback)
+    if any(ord(c) > 10000 for c in tag):
+        return False
+
+    # pure digits
+    if tag.isdigit():
+        return True
+
+    # structured junk
+    if re.fullmatch(r'[a-f0-9]{8,}', tag, re.IGNORECASE):
+        return True
+
+    # tiny junk tokens
+    if len(tag) <= 1:
+        return True
+
+    return False
