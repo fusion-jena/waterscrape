@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
+# TODO: How many languages? more languages necessary? interface with `language` field?
 MODEL_NAME = "nlptown/bert-base-multilingual-uncased-sentiment"
 
 print(f"Loading tokenizer and model: '{MODEL_NAME}'...")
