@@ -8,6 +8,13 @@
 ## Feedback
 ## Next steps
 -->
+* find a point in the data cleanup steps to cutoff incorrect dates
+* debug incorrect hashtags (character codes?)
+  - maybe this should also be in the cleanup step
+
+* cleanup heatmap / sentiment distribution plot
+  - add explanation (i.e., write summary/report containing context to the figure)
+----------------
 
 - is it possible to get the countries?
   * as a complementary info: maybe do it by language  -> classifier/LM?
