@@ -3,25 +3,36 @@ import mysql.connector
 from dotenv import load_dotenv
 from tqdm import tqdm
 import requests
-from html import unescape
 from utils import is_noise
 
 load_dotenv()
 
+COMMIT_INTERVAL = 100
+
+def get_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME"),
+        connection_timeout=30,
+    )
+
+def ensure_connected(conn):
+    """Ping the server and reconnect if the connection was lost."""
+    try:
+        conn.ping(reconnect=True, attempts=3, delay=5)
+    except mysql.connector.Error:
+        conn = get_connection()
+    return conn
+
 print("Connecting to database...")
-conn = mysql.connector.connect(
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    database=os.getenv("DB_NAME")
-)
+conn = get_connection()
 print(f"Connected successfully to '{os.getenv('DB_NAME')}' at {os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}.\n")
 
 cursor = conn.cursor(dictionary=True)
-update_cursor = conn.cursor()
 
-# Fetch all posts with no language data
 cursor.execute("""
     SELECT p.post_id, p.from_platform, p.instance_name, p.account_id
     FROM posts p
@@ -29,19 +40,19 @@ cursor.execute("""
     WHERE pl.post_id IS NULL
 """)
 rows = cursor.fetchall()
+cursor.close()
 print(f"Found {len(rows)} posts with missing language data.\n")
-
 
 updated = 0
 failed = 0
 
+
 def fetch_bluesky_language(post_id, account_id):
-    """Fetch language for a Bluesky post using the AT Protocol API."""
     try:
         response = requests.get(
             "https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts",
             params={"uris": f"at://{account_id}/app.bsky.feed.post/{post_id}"},
-            timeout=10
+            timeout=10,
         )
         response.raise_for_status()
         posts = response.json().get("posts", [])
@@ -53,12 +64,12 @@ def fetch_bluesky_language(post_id, account_id):
         pass
     return None
 
+
 def fetch_mastodon_language(post_id, instance):
-    """Fetch language for a Mastodon post using the instance API."""
     try:
         response = requests.get(
             f"https://{instance}/api/v1/statuses/{post_id}",
-            timeout=10
+            timeout=10,
         )
         response.raise_for_status()
         return response.json().get("language")
@@ -69,13 +80,16 @@ def fetch_mastodon_language(post_id, instance):
 
 try:
     for i, row in enumerate(tqdm(rows, desc="Fetching languages", unit="post")):
-        post_id    = row['post_id']
-        platform   = row['from_platform']
-        instance   = row['instance_name']
-        account_id = row['account_id']
+        # Ping before every batch commit
+        if i % COMMIT_INTERVAL == 0:
+            conn = ensure_connected(conn)
+
+        post_id    = row["post_id"]
+        platform   = row["from_platform"]
+        instance   = row["instance_name"]
+        account_id = row["account_id"]
 
         lang = None
-
         if platform == "BlueSky":
             lang = fetch_bluesky_language(post_id, account_id)
         elif platform == "Mastodon":
@@ -85,42 +99,48 @@ try:
             failed += 1
             continue
 
+        update_cursor = conn.cursor()
         try:
             update_cursor.execute(
                 "UPDATE posts SET languages = %s WHERE post_id = %s",
-                (lang, post_id)
+                (lang, post_id),
             )
-
             lang_rows = [
                 (post_id, l.strip())
                 for l in lang.split(",")
                 if l.strip()
             ]
-
             update_cursor.executemany(
                 "INSERT IGNORE INTO post_languages (post_id, language) VALUES (%s, %s)",
-                lang_rows
+                lang_rows,
             )
-
             updated += 1
-
         except mysql.connector.Error:
-            conn.rollback()
-            raise  # fail fast, no retry
+            try:
+                conn.rollback()
+            except mysql.connector.Error:
+                pass
+            raise
+        finally:
+            update_cursor.close()
 
-        # periodic commit (reduces lock time)
-        if updated > 0 and updated % 100 == 0:
+        if updated % COMMIT_INTERVAL == 0:
             conn.commit()
 
     conn.commit()
-
     print(f"\nDone — {updated} posts updated, {failed} could not be resolved.")
 
 except Exception:
-    conn.rollback()
+    try:
+        conn.rollback()
+    except mysql.connector.Error:
+        # CONNECTION WAS ALREADY DEAD
+        pass
     raise
 
 finally:
-    update_cursor.close()
-    conn.close()
+    try:
+        conn.close()
+    except Exception:
+        pass
     print("Database connection closed.\n")
