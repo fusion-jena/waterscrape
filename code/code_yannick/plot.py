@@ -1,4 +1,7 @@
+import os
+import mysql.connector
 import pandas as pd
+from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
@@ -86,6 +89,7 @@ def plot_time(keywords, smooth=True):
         fig.autofmt_xdate(rotation=30)
         fig.suptitle("Sentiment over time by keyword", fontsize=13, y=1.01)
         plt.tight_layout()
+        plt.savefig("sentiment-time.png")
         plt.show()
 
     else:
@@ -115,6 +119,7 @@ def plot_time(keywords, smooth=True):
         ax.set_xlabel("Date")
         ax.set_ylabel("Sentiment")
         plt.tight_layout()
+        plt.savefig("sentiment-time.png")
         plt.show()
 
 
@@ -296,18 +301,15 @@ def plot_engagement_sentiment_with_keywords():
         n='count'
     ).reset_index()
 
-    # Keyword distribution per bin
     keyword_counts = (
         merged.groupby(['sentiment_bucket', 'keyword'], observed=True)
         .size()
         .reset_index(name='count')
     )
-    # Normalize within each bin so we see %
     bin_totals = keyword_counts.groupby('sentiment_bucket', observed=True)['count'].transform('sum')
     keyword_counts['share'] = keyword_counts['count'] / bin_totals
 
-    # Keep only top k
-    top_k = 12
+    top_k = 15
     top_keywords = (
         keyword_counts.groupby('keyword')['count'].sum()
         .nlargest(top_k).index.tolist()
@@ -317,8 +319,13 @@ def plot_engagement_sentiment_with_keywords():
     heatmap_data = keyword_counts.pivot_table(
         index='keyword', columns='sentiment_bucket', values='share', observed=True
     ).fillna(0)
-    # Keep column order consistent with sentiment bins
     heatmap_data = heatmap_data.reindex(columns=stats['sentiment_bucket'].astype(str), fill_value=0)
+
+    # Raw counts pivot
+    raw_counts = keyword_counts.pivot_table(
+        index='keyword', columns='sentiment_bucket', values='count', observed=True
+    ).fillna(0)
+    raw_counts = raw_counts.reindex(columns=stats['sentiment_bucket'].astype(str), fill_value=0)
 
     fig, (ax_top, ax_bot) = plt.subplots(
         2, 1, figsize=(11, 9),
@@ -326,7 +333,6 @@ def plot_engagement_sentiment_with_keywords():
         constrained_layout=True
     )
 
-    # Same plot from before (engagement line plot)
     x = range(len(stats))
     ax_top.plot(x, stats['mean'], color='steelblue', linewidth=2, marker='o')
     ax_top.fill_between(x,
@@ -360,23 +366,147 @@ def plot_engagement_sentiment_with_keywords():
     for row_i, keyword in enumerate(heatmap_data.index):
         for col_j, bucket in enumerate(heatmap_data.columns):
             val = heatmap_data.loc[keyword, bucket]
-            if val > 0.01:   # skip near-zero cells
-                ax_bot.text(col_j, row_i, f'{val:.0%}',
+            raw = raw_counts.loc[keyword, bucket] if keyword in raw_counts.index else 0
+            if val > 0.01:
+                ax_bot.text(col_j, row_i, f'{val:.0%}\n({int(raw)})',
                             ha='center', va='center', fontsize=7,
                             color='black' if val < 0.5 else 'white')
+
+    plt.savefig("kw-sentiment-plots.png")
+    plt.show()
+
+
+def plot_keyword_platform_heatmap():
+    TOP_N = 15
+
+    keyword_counts = (
+        df[['post_id', 'keyword', 'platform']]
+        .drop_duplicates(subset='post_id')
+        .groupby(['platform', 'keyword'])
+        .size()
+        .reset_index(name='count')
+    )
+
+    bin_totals = keyword_counts.groupby('platform')['count'].transform('sum')
+    keyword_counts['share'] = keyword_counts['count'] / bin_totals
+
+    top_keywords = (
+        keyword_counts.groupby('keyword')['count'].sum()
+        .nlargest(TOP_N).index.tolist()
+    )
+    keyword_counts = keyword_counts[keyword_counts['keyword'].isin(top_keywords)]
+
+    heatmap_data = keyword_counts.pivot_table(
+        index='keyword', columns='platform', values='share'
+    ).fillna(0)
+
+    fig, ax = plt.subplots(figsize=(10, 7), constrained_layout=True)
+
+    im = ax.imshow(heatmap_data.values, aspect='auto', cmap='YlOrRd', interpolation='nearest')
+    ax.set_xticks(range(len(heatmap_data.columns)))
+    ax.set_xticklabels(heatmap_data.columns, fontsize=10)
+    ax.set_yticks(range(len(heatmap_data)))
+    ax.set_yticklabels(heatmap_data.index, fontsize=9)
+    ax.set_title(f"Keyword share per platform (top {TOP_N} keywords)")
+
+    cbar = fig.colorbar(im, ax=ax, fraction=0.03, pad=0.02)
+    cbar.set_label("Share within platform", fontsize=8)
+
+    for row_i, keyword in enumerate(heatmap_data.index):
+        for col_j, platform in enumerate(heatmap_data.columns):
+            val = heatmap_data.loc[keyword, platform]
+            if val > 0.01:
+                ax.text(col_j, row_i, f'{val:.0%}',
+                        ha='center', va='center', fontsize=8,
+                        color='black' if val < 0.5 else 'white')
+
+    plt.show()
+
+
+import re
+from itertools import combinations
+from collections import Counter
+
+def plot_hashtag_cooccurrence(keyword, top_n=15):
+    load_dotenv()
+    conn = mysql.connector.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
+    )
+    cursor = conn.cursor(dictionary=True)
+
+    print("Fetching posts...")
+    cursor.execute(
+        "SELECT post_id, content FROM posts WHERE keywords LIKE %s AND content IS NOT NULL",
+        (f"%{keyword}%",)
+    )
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    print(f"Fetched {len(rows)} posts.")
+
+    # Extract hashtags per post (same regex as your script)
+    post_hashtags = []
+    for row in rows:
+        tags = list(set(re.findall(r"#(\w+)", row["content"], re.UNICODE)))
+        tags = [t.lower() for t in tags]
+        if len(tags) >= 2:  # need at least 2 to form a pair
+            post_hashtags.append(tags)
+
+    # Find top N hashtags by frequency
+    all_tags = [t for tags in post_hashtags for t in tags]
+    top_hashtags = [t for t, _ in Counter(all_tags).most_common(top_n)]
+
+    # Count co-occurrences
+    cooc = Counter()
+    for tags in post_hashtags:
+        filtered = [t for t in tags if t in top_hashtags]
+        if len(filtered) >= 2:
+            for pair in combinations(sorted(filtered), 2):
+                cooc[pair] += 1
+
+    # Build symmetric matrix
+    matrix = pd.DataFrame(0, index=top_hashtags, columns=top_hashtags)
+    for (a, b), count in cooc.items():
+        matrix.loc[a, b] = count
+        matrix.loc[b, a] = count
+
+    fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
+
+    im = ax.imshow(matrix.values, cmap='YlOrRd', aspect='auto', interpolation='nearest')
+    ax.set_xticks(range(top_n))
+    ax.set_xticklabels([f'#{t}' for t in top_hashtags], rotation=45, ha='right', fontsize=9)
+    ax.set_yticks(range(top_n))
+    ax.set_yticklabels([f'#{t}' for t in top_hashtags], fontsize=9)
+    ax.set_title(f"Hashtag co-occurrence — '{keyword}' (top {top_n})")
+
+    fig.colorbar(im, ax=ax, fraction=0.03, pad=0.02).set_label("Co-occurrence count")
+
+    max_val = matrix.values.max()
+    for i, a in enumerate(top_hashtags):
+        for j, b in enumerate(top_hashtags):
+            val = matrix.loc[a, b]
+            if val > 0:
+                ax.text(j, i, str(val), ha='center', va='center', fontsize=7,
+                        color='black' if val < max_val * 0.6 else 'white')
 
     plt.show()
 
 
 def main():
+    # plot_hashtag_cooccurrence("water flow")
     # plot_cooccurrence()
     # plot_engagement_sentiment()
     # plot_frequency(keywords="water crisis", smooth=True)
-    # plot_time(
-    #     keywords="all",
-    #     smooth=True
-    # )
-    plot_engagement_sentiment_with_keywords()
+    plot_time(
+        keywords="all",
+        smooth=True
+    )
+    # plot_engagement_sentiment_with_keywords()
+    # plot_keyword_platform_heatmap()
 
 
 if __name__ == "__main__":
