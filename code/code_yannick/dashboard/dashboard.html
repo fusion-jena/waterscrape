@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Social Data Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script type="text/javascript" src="data/mock.js"></script>
+<script type="text/javascript" src="js/utils.js"></script>
+<script type="text/javascript" src="js/charts/stats.js"></script>
+<script type="text/javascript" src="js/charts/frequency.js"></script>
+<script type="text/javascript" src="js/charts/hashtags.js"></script>
+<script type="text/javascript" src="js/charts/pie.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>THWIC</h1>
+  <span class="sub">Explore topic-based social media data</span>
+</div>
+
+<div class="grid">
+
+  <!-- Engagement -->
+  <div class="card wide">
+    <div class="card-header">
+      <span class="card-title">Engagement overview</span>
+      <div class="controls">
+        <select id="kw-select"></select>
+      </div>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+  </div>
+
+  <!-- Frequency line chart -->
+  <div class="card wide">
+    <div class="card-header">
+      <span class="card-title">Post frequency over time</span>
+      <div class="controls">
+        <select id="kw-freq"></select>
+        <button class="pill-btn active" id="btn-smooth">Smoothed</button>
+        <button class="pill-btn" id="btn-raw">Raw</button>
+      </div>
+    </div>
+    <div id="freq-chart"></div>
+    <div class="legend" id="freq-legend"></div>
+  </div>
+
+  <!-- Top hashtags -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Top hashtags</span>
+      <select id="kw-hash"></select>
+    </div>
+    <div id="hash-chart"></div>
+  </div>
+
+  <!-- Post types donut -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Post types & platforms</span>
+      <select id="kw-donut"></select>
+    </div>
+    <div id="donut-chart"></div>
+  </div>
+
+  <!-- Top posts -->
+  <div class="card wide">
+    <div class="card-header">
+      <span class="card-title">Top posts by likes</span>
+      <select id="kw-posts"></select>
+    </div>
+    <table class="posts-table" id="posts-table">
+      <thead>
+        <tr>
+          <th style="width:100px">Platform</th>
+          <th>Content</th>
+          <th style="width:60px; text-align:right">Likes</th>
+          <th style="width:60px; text-align:right">Replies</th>
+        </tr>
+      </thead>
+      <tbody id="posts-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+
+// TODO: Update styles of all charts to match THWIC
+// TODO: Add logos from https://www.thwic.uni-jena.de/165/service
+// TODO: MOVE THIS TO A MAIN.JS
+function init() {
+  const defaultKw = KEYWORDS[0];
+
+  // Stats & posts use single keyword
+  populateSelect('kw-select', KEYWORDS, kw => { renderStats(kw); });
+  renderStats(defaultKw);
+
+  // populateSelect('kw-posts', KEYWORDS, kw => renderPosts(kw));
+  // renderPosts(defaultKw);
+
+  // Freq allows all
+  const freqSel = document.getElementById('kw-freq');
+  KEYWORDS.forEach(kw => {
+    const opt = document.createElement('option'); opt.value=kw; opt.textContent=kw;
+    freqSel.appendChild(opt);
+  });
+  const allOpt = document.createElement('option'); allOpt.value='all'; allOpt.textContent='All keywords';
+  freqSel.prepend(allOpt); freqSel.value='all';
+  freqSel.addEventListener('change', () => renderFreq(freqSel.value));
+  renderFreq('all');
+
+  document.getElementById('btn-smooth').addEventListener('click', () => {
+    smoothMode = true;
+    document.getElementById('btn-smooth').classList.add('active');
+    document.getElementById('btn-raw').classList.remove('active');
+    renderFreq(freqSel.value);
+  });
+  document.getElementById('btn-raw').addEventListener('click', () => {
+    smoothMode = false;
+    document.getElementById('btn-raw').classList.add('active');
+    document.getElementById('btn-smooth').classList.remove('active');
+    renderFreq(freqSel.value);
+  });
+
+  populateSelect('kw-hash', KEYWORDS, kw => renderHash(kw));
+  renderHash(defaultKw);
+
+  populateSelect('kw-donut', KEYWORDS, kw => renderDonut(kw));
+  renderDonut(defaultKw);
+}
+
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  const freqSel = document.getElementById('kw-freq');
+  renderFreq(freqSel.value);
+  const hashSel = document.getElementById('kw-hash');
+  renderHash(hashSel.value);
+  const donutSel = document.getElementById('kw-donut');
+  renderDonut(donutSel.value);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+/* ── reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ThWIC / Friedrich Schiller University Jena palette */
+  --bg:        #f0f2f5;
+  --surface:   #ffffff;
+  --surface2:  #eef0f4;
+  --border:    rgba(0, 35, 80, 0.10);
+  --border2:   rgba(0, 35, 80, 0.20);
+  --text:      #1a1c22;
+  --muted:     #5a6272;
+
+  /* Primary: deep university navy */
+  --accent:    #002350;
+  /* Secondary: water teal */
+  --accent2:   #007a8a;
+  /* Warm call-to-action */
+  --accent3:   #c04e2a;
+  /* Soft violet for variety */
+  --accent4:   #5c4fa0;
+  /* Amber / highlight */
+  --accent5:   #b07a00;
+
+  --radius:    6px;
+  --mono:      'JetBrains Mono', 'Fira Mono', monospace;
+  --sans:      'Source Sans 3', 'Inter', system-ui, sans-serif;
+}
+
+/* No separate dark-mode block — the uni site is fully light */
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* ── layout ── */
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 0.75rem;
+}
+.header h1 {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--accent);
+}
+.header .sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 35, 80, 0.06);
+}
+.card.wide { grid-column: 1 / -1; }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-left: 3px solid var(--accent2);
+  padding-left: 8px;
+}
+
+/* ── controls ── */
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+select, .pill-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+select:hover, .pill-btn:hover {
+  border-color: var(--accent2);
+  background: #dff0f3;
+}
+.pill-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ── stats row ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+.stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  border-top: 3px solid var(--accent2);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-family: var(--mono);
+}
+
+/* ── charts ── */
+svg { overflow: visible; }
+.axis line, .axis path { stroke: var(--border2); }
+.axis text { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
+.grid-line { stroke: var(--border); stroke-dasharray: 3,3; }
+
+/* tooltip */
+#tooltip {
+  position: fixed;
+  background: var(--accent);
+  border: 1px solid rgba(0,35,80,0.3);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 35, 80, 0.20);
+  color: #fff;
+}
+#tooltip .tt-label { color: rgba(255,255,255,0.65); font-size: 11px; margin-bottom: 4px; }
+#tooltip .tt-row { display: flex; gap: 8px; align-items: center; margin: 2px 0; }
+#tooltip .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+#tooltip .tt-name { flex: 1; }
+#tooltip .tt-val { font-weight: 700; font-family: var(--mono); }
+
+/* ── posts table ── */
+.posts-table { width: 100%; border-collapse: collapse; }
+.posts-table th {
+  font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0 0.75rem 0.6rem; text-align: left; border-bottom: 2px solid var(--border2);
+  font-weight: 700;
+}
+.posts-table td {
+  padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border);
+  vertical-align: top; font-size: 13px;
+}
+.posts-table tr:last-child td { border-bottom: none; }
+.posts-table tr:hover td { background: var(--surface2); }
+.platform-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.badge-mastodon { background: rgba(0, 35, 80, 0.10); color: var(--accent); }
+.badge-bluesky  { background: rgba(0, 122, 138, 0.12); color: var(--accent2); }
+.post-content { color: var(--text); max-width: 340px; }
+.post-meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.like-count { font-family: var(--mono); font-weight: 700; color: var(--accent5); }
+.reply-count { font-family: var(--mono); color: var(--muted); }
+
+/* ── legend ── */
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.legend-line { width: 20px; height: 2px; border-radius: 1px; }
+
+/* ── bar chart label ── */
+.bar-label { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
+.bar-count { fill: var(--accent); font-size: 11px; font-family: var(--mono); font-weight: 700; }
+
+/* ── post-type donut ── */
+.donut-center { font-family: var(--mono); }
