@@ -1,5 +1,7 @@
 # Scraping water-based social media data
 
+![Workflow](workflow.png)
+
 ## Data extraction
 
 Currently, we use `main.py` to extract data on a certain keyword and keyword category and save it to a database.
