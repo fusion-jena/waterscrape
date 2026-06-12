@@ -1,10 +1,16 @@
 from flask import Flask, jsonify, request, send_from_directory
 import mysql.connector
 import os
+import csv
 from dotenv import load_dotenv
 from collections import defaultdict
 
 load_dotenv()
+
+# Set DATA_SOURCE=csv to load from CSV instead of DB
+#   DATA_SOURCE=csv python3 app.py
+DATA_SOURCE = os.getenv("DATA_SOURCE", "db")  # "db" or "csv"
+CSV_DIR     = os.path.join(os.path.dirname(__file__), "data", "csv")
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 
@@ -19,19 +25,79 @@ DB_CONFIG = {
 def get_db():
     return mysql.connector.connect(**DB_CONFIG)
 
+def keywords_like(kw):
+    return f"%{kw}%"
 
-# SERVE DASHBOARD
+
+def read_csv(filename):
+    """Return all rows of a CSV as a list of dicts."""
+    path = os.path.join(CSV_DIR, filename)
+    with open(path, newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+def csv_keywords():
+    rows = read_csv("keywords.csv")
+    return [r["keywords"] for r in rows]
+
+def csv_weekly_counts(keywords=None):
+    rows = read_csv("weekly_counts.csv")
+    if keywords and keywords != "all":
+        rows = [r for r in rows if r["keywords"] == keywords]
+    # cast numeric fields
+    for r in rows:
+        r["n_posts"]        = int(r["n_posts"])
+        r["n_posts_smooth"] = float(r["n_posts_smooth"])
+    return rows
+
+def csv_engagement(keywords):
+    rows = read_csv("engagement.csv")
+    for r in rows:
+        if r["keywords"] == keywords:
+            return {k: v for k, v in r.items() if k != "keywords"}
+    return {}
+
+def csv_post_types(keywords):
+    type_rows     = read_csv("post_types.csv")
+    platform_rows = read_csv("platforms.csv")
+    t = next((r for r in type_rows if r["keywords"] == keywords), {})
+    p = [{"platform": r["platform"], "count": int(r["count"])}
+         for r in platform_rows if r["keywords"] == keywords]
+    return {
+        "originals":   int(t.get("originals", 0)),
+        "replies":     int(t.get("replies",   0)),
+        "by_platform": p,
+    }
+
+def csv_hashtags(keywords, limit=15):
+    rows = read_csv("hashtags.csv")
+    rows = [r for r in rows if r["keywords"] == keywords]
+    rows = sorted(rows, key=lambda r: int(r["freq"]), reverse=True)[:limit]
+    return [{"hashtag": r["hashtag"], "freq": int(r["freq"])} for r in rows]
+
+def csv_top_posts(keywords, limit=5):
+    rows = read_csv("top_posts.csv")
+    rows = [r for r in rows if r["keywords"] == keywords][:limit]
+    for r in rows:
+        r["likes_count"]   = int(r["likes_count"]   or 0)
+        r["replies_count"] = int(r["replies_count"] or 0)
+        r["reblogs_count"] = int(r["reblogs_count"] or 0)
+    return rows
+
+
 @app.route("/")
 def index():
     return send_from_directory("frontend", "dashboard.html")
 
-
-def keywords_like(keywords):
-    return f"%{keywords}%"
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory("frontend", path)
 
 
 @app.route("/api/keywords")
 def keywords():
+    if DATA_SOURCE == "csv":
+        return jsonify(csv_keywords())
+
     conn = get_db()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -48,10 +114,14 @@ def keywords():
     finally:
         conn.close()
 
-# ── /api/weekly-counts ─────────────────────────────────────────────────────────
+
 @app.route("/api/weekly-counts")
 def weekly_counts():
     keywords = request.args.get("keywords")
+
+    if DATA_SOURCE == "csv":
+        return jsonify(csv_weekly_counts(keywords))
+
     conn = get_db()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -81,7 +151,6 @@ def weekly_counts():
         rows = cursor.fetchall()
         cursor.close()
 
-        # 3-week rolling average, grouped per keyword so series don't bleed
         by_kw = defaultdict(list)
         for r in rows:
             if r["date"] is None:
@@ -106,7 +175,11 @@ def weekly_counts():
 @app.route("/api/hashtags")
 def hashtags():
     keywords = request.args.get("keywords", "")
-    limit   = int(request.args.get("limit", 15))
+    limit    = int(request.args.get("limit", 15))
+
+    if DATA_SOURCE == "csv":
+        return jsonify(csv_hashtags(keywords, limit))
+
     conn = get_db()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -130,6 +203,10 @@ def hashtags():
 @app.route("/api/engagement")
 def engagement():
     keywords = request.args.get("keywords", "")
+
+    if DATA_SOURCE == "csv":
+        return jsonify(csv_engagement(keywords))
+
     conn = get_db()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -154,6 +231,10 @@ def engagement():
 @app.route("/api/post-types")
 def post_types():
     keywords = request.args.get("keywords", "")
+
+    if DATA_SOURCE == "csv":
+        return jsonify(csv_post_types(keywords))
+
     conn = get_db()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -188,7 +269,11 @@ def post_types():
 @app.route("/api/top-posts")
 def top_posts():
     keywords = request.args.get("keywords", "")
-    limit   = int(request.args.get("limit", 5))
+    limit    = int(request.args.get("limit", 5))
+
+    if DATA_SOURCE == "csv":
+        return jsonify(csv_top_posts(keywords, limit))
+
     conn = get_db()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -215,4 +300,4 @@ def top_posts():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True)
