@@ -10,7 +10,7 @@ load_dotenv()
 # Set DATA_SOURCE=csv to load from CSV instead of DB
 #   DATA_SOURCE=csv python3 app.py
 DATA_SOURCE = os.getenv("DATA_SOURCE", "db")  # "db" or "csv"
-CSV_DIR     = os.path.join(os.path.dirname(__file__), "data", "csv")
+CSV_DIR = os.path.join(os.path.dirname(__file__), "frontend", "data", "csv")
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 
@@ -299,5 +299,16 @@ def top_posts():
         conn.close()
 
 
+@app.route("/api/sentiment")
+def sentiment():
+    keywords = request.args.get("keywords", "")
+    rows = read_csv("post_sentiments_time.csv")  # or hardcode the path to your file
+    if keywords:
+        rows = [r for r in rows if r["keyword"] == keywords]
+    for r in rows:
+        r["sentiment"] = float(r["sentiment"])
+    return jsonify(rows)
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

@@ -1,13 +1,16 @@
 function renderDonut(kw) {
+  const p = platformData[kw];
+  if (!p) return;
+
   const container = document.getElementById('donut-chart');
   container.innerHTML = '';
-  const p = platformData[kw];
- 
+
   const platforms = (p.by_platform || []).map((r, i) => ({
     label: r.platform,
     value: r.count,
     color: COLORS[i] || '#888',
   }));
+
   const total = platforms.reduce((s,d)=>s+d.value,0);
  
   const W = container.clientWidth || 320, H = 200;

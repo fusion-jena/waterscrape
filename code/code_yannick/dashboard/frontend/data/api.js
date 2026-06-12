@@ -9,6 +9,9 @@ let engData      = {};
 let platformData = {};
 let hashData     = {};
 let postsData    = {};
+
+let sentimentData = {};  // { [kw]: [{ date, sentiment, post_id }] }
+
 const BASE = "";
 
 const COLORS = [
@@ -20,6 +23,11 @@ const COLORS = [
   "#60c8f5",
   "#ff7eb3"
 ];
+
+
+async function fetchSentiment(keywords) {
+    return get(`/api/sentiment?keywords=${encodeURIComponent(keywords)}`);
+}
 
 async function get(path) {
     const res = await fetch(BASE + path);
@@ -77,20 +85,22 @@ async function fetchTopPosts(keywords, limit = 5) {
 
 async function fetchAll(keywords) {
   await Promise.all(keywords.map(async kw => {
-    const [eng, types, hash, posts] = await Promise.all([
+    const [eng, types, hash, posts, sent] = await Promise.all([
       fetchEngagement(kw),
       fetchPostTypes(kw),
       fetchHashtags(kw, 10),
       fetchTopPosts(kw, 5),
+      fetchSentiment(kw),
     ]);
-    engData[kw]      = eng;
-    platformData[kw] = types;
-    hashData[kw]     = hash;
-    postsData[kw]    = posts;
+    engData[kw]       = eng;
+    platformData[kw]  = types;
+    hashData[kw]      = hash;
+    postsData[kw]     = posts;
+    sentimentData[kw] = sent;
   }));
 
   const rows = await fetchWeeklyCounts("all");
   for (const [kw, data] of Object.entries(rows)) {
-      weeklyCounts.push(...data.map(r => ({ ...r, keyword: r.keywords })));
+    weeklyCounts.push(...data.map(r => ({ ...r, keyword: r.keywords })));
   }
 }

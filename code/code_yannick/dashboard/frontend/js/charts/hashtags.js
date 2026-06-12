@@ -1,8 +1,9 @@
 function renderHash(kw) {
   const container = document.getElementById('hash-chart');
   container.innerHTML = '';
-  const data = (hashData[kw] || hashData[KEYWORDS[0]] || []).slice(0,10).map(r => ({ tag: r.hashtag, freq: r.freq }));
- 
+  const data = (hashData[kw] || []).slice(0,10).map(r => ({ tag: r.hashtag, freq: r.freq }));
+  if (data.length === 0) return;
+
   const W = container.clientWidth || 320, H = 10 + data.length * 26;
   const margin = { top:4, right:60, bottom:4, left:120 };
   const iw = W - margin.left - margin.right;

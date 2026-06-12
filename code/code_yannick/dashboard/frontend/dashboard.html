@@ -12,6 +12,7 @@
 <script type="text/javascript" src="js/charts/hashtags.js"></script>
 <script type="text/javascript" src="js/charts/pie.js"></script>
 <script type="text/javascript" src="js/charts/top_posts.js"></script>
+<script type="text/javascript" src="js/charts/sentiment_time.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" type="image/svg+xml" href="img/ThWIC_Logo.svg">
 </head>
@@ -23,6 +24,14 @@
   <span class="sub">Explore topic-based social media data</span>
 </div>
 
+<!-- Tab buttons -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="keywords">Keyword breakdown</button>
+  <button class="tab-btn" data-tab="overview">Overview</button>
+  <button class="tab-btn" data-tab="analysis">Analysis</button>
+</div>
+
+<div class="tab-panel active" id="tab-keywords">
 <div class="grid">
 
   <!-- Engagement -->
@@ -88,6 +97,27 @@
   </div>
 
 </div>
+</div>
+
+<!-- Tab 3: analysis (placeholder) -->
+<div class="tab-panel" id="tab-analysis">
+  <div class="grid">
+    <div class="card wide">
+      <div class="card-header"><span class="card-title">Data analysis</span></div>
+      <p style="color:var(--muted); padding: 2rem 0;"> -------- Coming soon --- </p>
+      <div class="card wide">
+        <div class="card-header">
+          <span class="card-title">Sentiment over time</span>
+          <div class="controls">
+            <select id="kw-sentiment-time"></select>
+          </div>
+        </div>
+        <div id="sentiment-time-chart"></div>
+        <div class="legend" id="sentiment-time-legend"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="tooltip"></div>
 
@@ -138,8 +168,25 @@ async function init() {
 
   populateSelect('kw-donut', KEYWORDS, kw => renderDonut(kw));
   renderDonut(defaultKw);
+
+  // SENTIMENT ANALYSIS
+  populateSelect('kw-sentiment-time', KEYWORDS, kw => renderSentimentOverTime(kw));
+  const allOptSent = document.createElement('option');
+  allOptSent.value = 'all'; allOptSent.textContent = 'All keywords';
+  document.getElementById('kw-sentiment-time').prepend(allOptSent);
+  document.getElementById('kw-sentiment-time').value = 'all';
+  renderSentimentOverTime('all');
 }
 
+// TAB SWITCHNG
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
 window.addEventListener('load', init);
 window.addEventListener('resize', () => {
   const freqSel = document.getElementById('kw-freq');
