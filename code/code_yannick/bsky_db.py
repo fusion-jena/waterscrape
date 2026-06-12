@@ -127,6 +127,9 @@ def insert_hashtag(cursorDB, post, keywords, keyword_category):
 
     for tag in tags:
 
+        if not tag:
+            continue
+
         tag = unescape(tag).strip().lower().lstrip("#")
 
         if is_noise(tag) or not tag:
@@ -257,7 +260,7 @@ def extract_bsky_db(keywords, keyword_category=None):
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME")
     )
-    cursorDB = db_connection.cursor()
+    cursorDB = db_connection.cursor(dictionary=True)
 
     BLUESKY_HANDLE = os.getenv("BLUESKY_HANDLE")
     BLUESKY_APP_PASSWORD = os.getenv("BLUESKY_APP_PASSWORD")

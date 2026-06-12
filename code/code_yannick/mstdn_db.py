@@ -93,6 +93,9 @@ def insert_hashtag(cursor, status):
 
     for tag in tags:
 
+        if not tag:
+            continue
+
         tag = unescape(tag).strip().lower().lstrip("#")
 
         if is_noise(tag) or not tag:
@@ -197,7 +200,7 @@ def extract_mastodon_db(keywords, keyword_category=None):
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME")
     )
-    cursor = db_connection.cursor()
+    cursor = db_connection.cursor(dictionary=True)
 
     # Mastodon Authorization: the access_token can be copied from the Mastodon GUI
     ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
