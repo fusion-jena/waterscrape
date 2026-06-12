@@ -5,18 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Social Data Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script type="text/javascript" src="data/mock.js"></script>
+<script type="text/javascript" src="data/api.js"></script>
 <script type="text/javascript" src="js/utils.js"></script>
 <script type="text/javascript" src="js/charts/stats.js"></script>
 <script type="text/javascript" src="js/charts/frequency.js"></script>
 <script type="text/javascript" src="js/charts/hashtags.js"></script>
 <script type="text/javascript" src="js/charts/pie.js"></script>
+<script type="text/javascript" src="js/charts/top_posts.js"></script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="icon" type="image/svg+xml" href="img/ThWIC_Logo.svg">
 </head>
 <body>
 
 <div class="header">
-  <h1>THWIC</h1>
+  <img src="img/ThWIC_Logo.svg" alt="ThWIC logo" style="height: 80px;" />
+  <h1>ThWIC</h1>
   <span class="sub">Explore topic-based social media data</span>
 </div>
 
@@ -93,15 +96,18 @@
 // TODO: Update styles of all charts to match THWIC
 // TODO: Add logos from https://www.thwic.uni-jena.de/165/service
 // TODO: MOVE THIS TO A MAIN.JS
-function init() {
+async function init() {
+  KEYWORDS = await fetch('/api/keywords').then(r => r.json());
+  await fetchAll(KEYWORDS);  // fetchAll is defined in api.js
   const defaultKw = KEYWORDS[0];
 
   // Stats & posts use single keyword
+
   populateSelect('kw-select', KEYWORDS, kw => { renderStats(kw); });
   renderStats(defaultKw);
 
-  // populateSelect('kw-posts', KEYWORDS, kw => renderPosts(kw));
-  // renderPosts(defaultKw);
+  populateSelect('kw-posts', KEYWORDS, kw => renderPosts(kw));
+  renderPosts(defaultKw);
 
   // Freq allows all
   const freqSel = document.getElementById('kw-freq');

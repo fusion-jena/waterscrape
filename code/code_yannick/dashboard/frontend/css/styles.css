@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..900&display=swap');
 /* ── reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -8,26 +9,25 @@
   --surface2:  #eef0f4;
   --border:    rgba(0, 35, 80, 0.10);
   --border2:   rgba(0, 35, 80, 0.20);
-  --text:      #1a1c22;
+  --text: var(--text-color, #1a1c22);
   --muted:     #5a6272;
 
-  /* Primary: deep university navy */
-  --accent:    #002350;
-  /* Secondary: water teal */
+  /* Primary */
+  --accent:    #244383;
+  /* Secondary */
   --accent2:   #007a8a;
-  /* Warm call-to-action */
+  /* Warm */
   --accent3:   #c04e2a;
-  /* Soft violet for variety */
   --accent4:   #5c4fa0;
-  /* Amber / highlight */
+  /* highlight? */
   --accent5:   #b07a00;
 
   --radius:    6px;
   --mono:      'JetBrains Mono', 'Fira Mono', monospace;
-  --sans:      'Source Sans 3', 'Inter', system-ui, sans-serif;
+  --sans: var(--fsu-font-family, 'Roboto Flex', sans-serif);
 }
 
-/* No separate dark-mode block — the uni site is fully light */
+/* No separate dark-mode block */
 
 body {
   font-family: var(--sans);
@@ -39,7 +39,7 @@ body {
   line-height: 1.65;
 }
 
-/* ── layout ── */
+/* layout */
 .header {
   display: flex;
   align-items: baseline;
@@ -49,10 +49,9 @@ body {
   padding-bottom: 0.75rem;
 }
 .header h1 {
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.2px;
-  color: var(--accent);
+  font-family: var(--fsu-font-family, 'Roboto Flex', sans-serif);
+  font-variation-settings: var(--fsu-font-variation-text-regular);
+  color: #244383;
 }
 .header .sub {
   font-size: 13px;
@@ -90,7 +89,7 @@ body {
   padding-left: 8px;
 }
 
-/* ── controls ── */
+/* controls */
 .controls {
   display: flex;
   gap: 8px;
@@ -119,7 +118,7 @@ select:hover, .pill-btn:hover {
   border-color: var(--accent);
 }
 
-/* ── stats row ── */
+/* stats row */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -153,7 +152,7 @@ select:hover, .pill-btn:hover {
   font-family: var(--mono);
 }
 
-/* ── charts ── */
+/* charts */
 svg { overflow: visible; }
 .axis line, .axis path { stroke: var(--border2); }
 .axis text { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
@@ -180,7 +179,7 @@ svg { overflow: visible; }
 #tooltip .tt-name { flex: 1; }
 #tooltip .tt-val { font-weight: 700; font-family: var(--mono); }
 
-/* ── posts table ── */
+/* posts table */
 .posts-table { width: 100%; border-collapse: collapse; }
 .posts-table th {
   font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
@@ -205,14 +204,14 @@ svg { overflow: visible; }
 .like-count { font-family: var(--mono); font-weight: 700; color: var(--accent5); }
 .reply-count { font-family: var(--mono); color: var(--muted); }
 
-/* ── legend ── */
+/* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 .legend-line { width: 20px; height: 2px; border-radius: 1px; }
 
-/* ── bar chart label ── */
+/* bar chart label */
 .bar-label { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
 .bar-count { fill: var(--accent); font-size: 11px; font-family: var(--mono); font-weight: 700; }
 
-/* ── post-type donut ── */
+/* post-type donut */
 .donut-center { font-family: var(--mono); }

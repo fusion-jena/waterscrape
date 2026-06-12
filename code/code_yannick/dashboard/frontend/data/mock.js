@@ -1,7 +1,3 @@
-// ══════════════════════════════════════════════════
-// MOCK DATA — replace these with real fetched data
-// ══════════════════════════════════════════════════
-
 const KEYWORDS = ["water flow", "water crisis", "water supply", "water pollution"];
 const COLORS   = [
   "#6c8fff", "#4de8b4", "#f7855c", "#c97cf5",

@@ -2,23 +2,24 @@ function renderDonut(kw) {
   const container = document.getElementById('donut-chart');
   container.innerHTML = '';
   const p = platformData[kw];
-
-  const platforms = [
-    { label:'Mastodon', value: p.mastodon, color: '#0A224D' },
-    { label:'Bluesky',  value: p.bluesky,  color: '#244383' },
-  ];
+ 
+  const platforms = (p.by_platform || []).map((r, i) => ({
+    label: r.platform,
+    value: r.count,
+    color: COLORS[i] || '#888',
+  }));
   const total = platforms.reduce((s,d)=>s+d.value,0);
-
+ 
   const W = container.clientWidth || 320, H = 200;
   const cx = W * 0.35, cy = H / 2, r = 75, ri = 48;
-
+ 
   const pie = d3.pie().value(d=>d.value).sort(null);
   const arc = d3.arc().innerRadius(ri).outerRadius(r).cornerRadius(2).padAngle(0.03);
   const arcHover = d3.arc().innerRadius(ri).outerRadius(r+6).cornerRadius(2).padAngle(0.03);
-
+ 
   const svg = d3.select(container).append('svg').attr('width', W).attr('height', H);
   const g = svg.append('g').attr('transform',`translate(${cx},${cy})`);
-
+ 
   // center label
   const centerG = g.append('g');
   centerG.append('text').attr('text-anchor','middle').attr('y',-10)
@@ -27,7 +28,7 @@ function renderDonut(kw) {
   centerG.append('text').attr('text-anchor','middle').attr('y',10)
     .attr('fill','var(--muted)').attr('font-size',11)
     .text('posts');
-
+ 
   g.selectAll('path').data(pie(platforms)).join('path')
     .attr('d', arc)
     .attr('fill', d=>d.data.color)
@@ -41,7 +42,7 @@ function renderDonut(kw) {
       d3.select(this).attr('d', arc).attr('opacity', 0.85);
       hideTip();
     });
-
+ 
   // legend on the right
   const lx = cx + r + 24;
   const ly = cy - (platforms.length * 22) / 2;
@@ -56,4 +57,3 @@ function renderDonut(kw) {
       .text(fmtNum(p.value)+' ('+( p.value/total*100).toFixed(0)+'%)');
   });
 }
-
