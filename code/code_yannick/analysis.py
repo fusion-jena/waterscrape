@@ -1,3 +1,6 @@
+import os
+import sys
+
 import pandas as pd
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
@@ -6,6 +9,15 @@ from tqdm import tqdm
 
 # TODO: How many languages? more languages necessary? interface with `language` field?
 MODEL_NAME = "nlptown/bert-base-multilingual-uncased-sentiment"
+
+# input snapshot's data.csv, passed on the command line:
+#   python analysis.py ~/snapshots/<timestamp>/data.csv
+# output sentiment.csv is written into that same folder.
+if len(sys.argv) != 2:
+    print("usage: python analysis.py <path-to-data.csv>")
+    raise SystemExit(1)
+input_path = sys.argv[1]
+output_path = os.path.join(os.path.dirname(input_path), "sentiment.csv")
 
 print(f"Loading tokenizer and model: '{MODEL_NAME}'...")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -27,7 +39,7 @@ def get_sentiment(text):
     return sentiment
 
 print("Loading posts from CSV...")
-df = pd.read_csv("posts.csv")
+df = pd.read_csv(input_path)
 print(f"Loaded {len(df)} posts.\n")
 
 print("Starting sentiment analysis...\n")
@@ -52,6 +64,7 @@ for i, keyword in enumerate(keywords_list, start=1):
 print(f"Sentiment analysis complete. Total posts processed: {len(results)}\n")
 
 results_df = pd.DataFrame(results)
-output_file = "post_sentiments_time.csv"
-results_df.to_csv(output_file, index=False)
-print(f"Saved {len(results_df)} sentiment scores to '{output_file}'.")
+tmp_path = output_path + ".partial"
+results_df.to_csv(tmp_path, index=False)
+os.replace(tmp_path, output_path)
+print(f"Saved {len(results_df)} sentiment scores to '{output_path}'.")
