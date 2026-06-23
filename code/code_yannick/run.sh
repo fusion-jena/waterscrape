@@ -14,4 +14,4 @@ module load nvidia/cuda/11.7
 
 source /vast/$USER/venv/bin/activate
 
-python3 analysis.py
+python3 analysis.py "$1"
