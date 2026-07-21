@@ -5,7 +5,7 @@ set -euo pipefail
 DRACO="qe75hep@login1.draco.uni-jena.de"
 SNAP_ROOT="$HOME/snapshots"
 REMOTE_SNAP_ROOT="~/snapshots"
-REMOTE_RUN="cd ~/yannick_hiwi/code/code_yannick && sbatch --wait run.sh"
+REMOTE_RUN="cd ~/yannick_hiwi/code/code_yannick && sbatch --wait run_slurm.sh"
 
 echo "[1/4] exporting snapshot on KSZ"
 /usr/users/lqe75hep/yannick_hiwi/code/code_yannick/venv/bin/python fetch_posts.py
