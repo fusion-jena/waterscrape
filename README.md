@@ -1,93 +1,106 @@
-# Yannick_Hiwi
+# Scraping water-based social media data
 
+![Workflow](workflow.png)
 
+## Data extraction
 
-## Getting started
+Currently, we use `main.py` to extract data on a certain keyword and keyword category and save it to a database.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Example usage of the script:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://git.uni-jena.de/fusion/teaching/thesis/yannick_hiwi.git
-git branch -M main
-git push -uf origin main
+```bash
+$ python3 main.py bluesky 1000 --keywords "water scarcity" --keyword_category "water conflict"
 ```
 
-## Integrate with your tools
+If the `keywords` and `keyword_category` arguments are not provided explicitly, the script will run the scraping process for all keywords contained in the file `hierarchy-social-media.txt`.
 
-- [ ] [Set up project integrations](https://git.uni-jena.de/fusion/teaching/thesis/yannick_hiwi/-/settings/integrations)
+Due to the scarcity of some of the rare keywords, we provide an additional argument that specifies a minimum post number for a given keyword. For example, if a given keyword has less than `k = 1000` posts, it is omitted from the scraping process and not taken into consideration for further analysis.
 
-## Collaborate with your team
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## Database structure
 
-## Test and Deploy
+We can take a look at the foreign key relationships:
 
-Use the built-in continuous integration in GitLab.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```sql
+SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME 
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+WHERE TABLE_SCHEMA = 'i86hoxb7_thwicsonar'
+AND REFERENCED_TABLE_NAME IS NOT NULL;
+```
 
-***
+```bash
++-------------------+-------------+--------------------------+-----------------------+------------------------+
+| TABLE_NAME        | COLUMN_NAME | CONSTRAINT_NAME          | REFERENCED_TABLE_NAME | REFERENCED_COLUMN_NAME |
++-------------------+-------------+--------------------------+-----------------------+------------------------+
+| media_attachments | post_id     | media_attachments_ibfk_1 | posts                 | post_id                |
+| polls             | post_id     | fk_polls_posts           | posts                 | post_id                |
+| posts             | account_id  | posts_ibfk_1             | accounts              | account_id             |
++-------------------+-------------+--------------------------+-----------------------+------------------------+
+```
 
-# Editing this README
+Each `media_attachment` and `poll` has a `post`, each post is associated with an `account`.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Instructions
 
-## Suggestions for a good README
+### Prerequisites
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+In order to run the main scraping script, make sure to install the necessary requirements:
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+$ pip install -r requirements.txt
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+The directory must also contain a `.env` file with the necessary credentials for both the MySQL user and the social media accesses:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+DB_HOST=mysql8p2.uni-jena.de
+DB_PORT=3306
+DB_USER=<username>
+DB_PASSWORD=<password>
+DB_NAME=i86hoxb7_thwicsonar
+BLUESKY_HANDLE=<bluesky-username>
+BLUESKY_APP_PASSWORD=<bluesky-password>
+ACCESS_TOKEN=<mastodon-access-token>
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Finally, the university's `sci-std-VPN` must be active in order to connect to the MySQL server, and for the SSH server if one intends to use `cron` to run the code automatically. Follow the [wiki page](https://wiki.uni-jena.de/spaces/URZ010SD/pages/22453512/VPN+-+zuhause+und+unterwegs) to setup the VPN. 
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+For example, we can use `OpenConnect` on a Linux machine:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+$ sudo openconnect -b --useragent 'AnyConnect' --user=ab12cde@uni-jena.de --pid-file=/var/run/vpn.pid --timestamp --syslog vpn.sci.uni-jena.de
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Run with `cron`
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+As opposed to manually running the scraping script with specific keywords like in the example above, we use the `cron` scheduler to automatically execute the script in set time intervals. This repository is cloned onto a remote server accessed via SSH, where we submit one `cron` job for each platform. The result is an automatic scrape taking place once a week.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Once the `sci-std-VPN` is active, connect to the SSH server with your given username:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```bash
+$ ssh lab12cde@thwicsonar.inf-bb.uni-jena.de
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+This repo can then be cloned and setup on the server with a virtual environment. Once this is done, one or multiple `cron` jobs can be submitted in order to automatically run the code whenever specified. Use `crontab -l` to check if the correct command and time have been submitted for each job.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Sentiment analysis
 
-## License
-For open source projects, say how it is licensed.
+The sentiment analysis is designed to take place in two separate steps. The `fetch_posts.py` saves relevant columns from the database table to a CSV table. For faster computation, we run the sentiment analysis from a separate Draco cluster with the use of GPUs. This results in the following workflow from KSZ:
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```text
+$ python3 fetch_posts.py
+$ scp posts_likes.csv qe75hep@login1.draco.uni-jena.de:/home/qe75hep/yannick_hiwi/code/code_yannick/posts_likes.csv
+```
+
+Then login to Draco for the analysis step:
+
+```text
+$ ssh qe75hep@login1.draco.uni-jena.de
+$ cd yannick_hiwi/code/code_yannick
+```
+
+And submit a Slurm job:
+```text
+$ sbatch run.sh
+```
