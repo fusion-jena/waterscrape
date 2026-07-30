@@ -3,7 +3,8 @@
 set -euo pipefail
 
 DRACO="qe75hep@login1.draco.uni-jena.de"
-SNAP_ROOT="$HOME/snapshots"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export SNAP_ROOT="${SNAP_ROOT:-$REPO/snapshots}"
 REMOTE_SNAP_ROOT="snapshots"
 
 # Optional: path to the dashboard repo checkout. If unset, the dashboard CSVs
