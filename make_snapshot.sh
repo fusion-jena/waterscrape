@@ -27,6 +27,6 @@ else
 fi
 
 echo "[3/3] pushing to Draco"
-rsync -az "$SNAP_ROOT/$id" "$DRACO:$SNAP_ROOT/"
+rsync -az "$SNAP_ROOT/$id" "$DRACO:~/waterscrape/snapshots/"
 
 echo "done: pushed $id to Draco"
