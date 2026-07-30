@@ -5,11 +5,12 @@ set -euo pipefail
 DRACO="qe75hep@login1.draco.uni-jena.de"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export SNAP_ROOT="${SNAP_ROOT:-$REPO/snapshots}"
-REMOTE_SNAP_ROOT="snapshots"
 
 # Optional: path to the dashboard repo checkout. If unset, the dashboard CSVs
 # are simply not produced and the pipeline runs as normal.
-DASHBOARD_REPO="${DASHBOARD_REPO:-}"
+#
+DASHBOARD_REPO="${DASHBOARD_REPO:-$HOME/waterviz}"
+# DASHBOARD_REPO="${DASHBOARD_REPO:-}"
 
 echo "[1/3] exporting snapshot from DB"
 /usr/users/lqe75hep/yannick_hiwi/code/code_yannick/venv/bin/python fetch_posts.py
@@ -26,6 +27,6 @@ else
 fi
 
 echo "[3/3] pushing to Draco"
-rsync -az "$SNAP_ROOT/$id" "$DRACO:$REMOTE_SNAP_ROOT/"
+rsync -az "$SNAP_ROOT/$id" "$DRACO:$SNAP_ROOT/"
 
 echo "done: pushed $id to Draco"
