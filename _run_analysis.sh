@@ -3,9 +3,9 @@
 set -euo pipefail
 
 DRACO="qe75hep@login1.draco.uni-jena.de"
-SNAP_ROOT="$HOME/snapshots"
-REMOTE_SNAP_ROOT="snapshots"
-REMOTE_RUN="cd ~/yannick_hiwi/code/code_yannick && sbatch --wait run_slurm.sh"
+SNAP_ROOT="$HOME/waterscrape/snapshots"
+REMOTE_SNAP_ROOT="waterscrape/snapshots"
+REMOTE_RUN="cd ~/waterscrape && sbatch --wait run_slurm.sh"
 
 id="$(basename "$(ls -1d "$SNAP_ROOT"/*/ | sort | tail -1)")"
 echo "analyzing snapshot: $id"
