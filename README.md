@@ -1,6 +1,10 @@
 # Scraping water-based social media data
 
-![Workflow](workflow.png)
+This project contains work that takes place in two distinct repositories. On one end, we have data extraction and analysis, contained in this repository, which includes the `cron`-automated scraping of data and collection in a MySQL database. On the second end, we have static data handling and analysis. 
+
+Both of these tasks are handled in this repository accross two SSH servers (KSZ and Draco) via two auxiliary scripts. More info on the usage is contained in the sections that follow. A basic dashboard app allowing for visual data analysis is contained in the `waterviz` repo.
+
+![Workflow](img/workflow.png)
 
 ## Data extraction
 
@@ -17,29 +21,6 @@ If the `keywords` and `keyword_category` arguments are not provided explicitly, 
 Due to the scarcity of some of the rare keywords, we provide an additional argument that specifies a minimum post number for a given keyword. For example, if a given keyword has less than `k = 1000` posts, it is omitted from the scraping process and not taken into consideration for further analysis.
 
 
-## Database structure
-
-We can take a look at the foreign key relationships:
-
-
-```sql
-SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME 
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-WHERE TABLE_SCHEMA = 'i86hoxb7_thwicsonar'
-AND REFERENCED_TABLE_NAME IS NOT NULL;
-```
-
-```bash
-+-------------------+-------------+--------------------------+-----------------------+------------------------+
-| TABLE_NAME        | COLUMN_NAME | CONSTRAINT_NAME          | REFERENCED_TABLE_NAME | REFERENCED_COLUMN_NAME |
-+-------------------+-------------+--------------------------+-----------------------+------------------------+
-| media_attachments | post_id     | media_attachments_ibfk_1 | posts                 | post_id                |
-| polls             | post_id     | fk_polls_posts           | posts                 | post_id                |
-| posts             | account_id  | posts_ibfk_1             | accounts              | account_id             |
-+-------------------+-------------+--------------------------+-----------------------+------------------------+
-```
-
-Each `media_attachment` and `poll` has a `post`, each post is associated with an `account`.
 
 ## Instructions
 
@@ -107,3 +88,7 @@ $ git clone https://github.com/fusion-jena/waterscrape.git
 $ cd waterscrape
 $ sbatch run_slurm.sh
 ```
+
+### Database structure
+
+![Workflow](img/db.png)
