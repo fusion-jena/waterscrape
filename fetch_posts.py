@@ -6,7 +6,7 @@ import mysql.connector
 from dotenv import load_dotenv
 from utils import clean_html
 
-SNAP_ROOT = os.environ.get("SNAP_ROOT", os.path.join(os.path.dirname(__file__), "snapshots"))
+SNAP_ROOT = os.environ.get("SNAP_ROOT", os.path.expanduser("~/waterscrape/snapshots"))
 MIN_COUNT = 1_000
 
 load_dotenv()
