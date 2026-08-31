@@ -53,15 +53,19 @@ $ pip install -r requirements.txt
 
 The directory must also contain a `.env` file with the necessary credentials for both the MySQL user and the social media accesses:
 
-```bash
+```text
+# Credentials for scraping
+BLUESKY_HANDLE=
+BLUESKY_APP_PASSWORD=
+ACCESS_TOKEN=
+
+# Credentials for DB access
 DB_HOST=mysql8p2.uni-jena.de
 DB_PORT=3306
-DB_USER=<username>
-DB_PASSWORD=<password>
 DB_NAME=i86hoxb7_thwicsonar
-BLUESKY_HANDLE=<bluesky-username>
-BLUESKY_APP_PASSWORD=<bluesky-password>
-ACCESS_TOKEN=<mastodon-access-token>
+
+DB_USER=
+DB_PASSWORD=
 ```
 
 Finally, the university's `sci-std-VPN` must be active in order to connect to the MySQL server, and for the SSH server if one intends to use `cron` to run the code automatically. Follow the [wiki page](https://wiki.uni-jena.de/spaces/URZ010SD/pages/22453512/VPN+-+zuhause+und+unterwegs) to setup the VPN. 
@@ -86,21 +90,20 @@ This repo can then be cloned and setup on the server with a virtual environment.
 
 ### Sentiment analysis
 
-The sentiment analysis is designed to take place in two separate steps. The `fetch_posts.py` saves relevant columns from the database table to a CSV table. For faster computation, we run the sentiment analysis from a separate Draco cluster with the use of GPUs. This results in the following workflow from KSZ:
+The sentiment analysis is designed to take place in two separate steps. The `fetch_posts.py` saves relevant columns from the database table to a CSV table. For faster computation, we run the sentiment analysis from a separate Draco cluster with the use of GPUs. This results in the following two auxiliary scripts being used on KSZ:
 
 ```text
-$ python3 fetch_posts.py
-$ scp posts_likes.csv qe75hep@login1.draco.uni-jena.de:/home/qe75hep/yannick_hiwi/code/code_yannick/posts_likes.csv
+$ bash make_snapshot.sh
+$ bash run_analysis.sh
 ```
 
-Then login to Draco for the analysis step:
+The first syncs up the datasets used by the visualization and analysis components, the second runs the analysis on the most recent snapshot via Draco (a separate cluster that allows for GPU usage via Slurm).
+
+Or submit a Slurm job manually from Draco:
 
 ```text
 $ ssh qe75hep@login1.draco.uni-jena.de
-$ cd yannick_hiwi/code/code_yannick
-```
-
-And submit a Slurm job:
-```text
-$ sbatch run.sh
+$ git clone https://github.com/fusion-jena/waterscrape.git
+$ cd waterscrape
+$ sbatch run_slurm.sh
 ```
